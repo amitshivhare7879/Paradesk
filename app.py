@@ -350,17 +350,17 @@ def init_db(force_reseed: bool = False):
                 reg_time = now - timedelta(hours=6, minutes=idx*5)
                 token = f"PX-CRC{idx:02d}"
                 
-                # First 5 are physically CHECKED_IN with evaluation scores
+                # First 5 are physically CHECKED_IN (seated at desk, initial kickoff phase)
                 if idx <= 5:
                     status_val = "CHECKED_IN"
                     checkin_ts = (now - timedelta(minutes=45 - idx*5)).strftime("%Y-%m-%d %H:%M:%S")
-                    sc_in, sc_tech, sc_pr = 35.0 + (5 - idx), 30.0 + (5 - idx), 20.0 + (5 - idx)
                 else:
                     status_val = "ALLOCATED"
                     checkin_ts = None
-                    sc_in, sc_tech, sc_pr = 0.0, 0.0, 0.0
 
-                tot_score = sc_in + sc_tech + sc_pr
+                # Initial scores are 0.0 for all participants at hackathon kickoff
+                sc_in, sc_tech, sc_pr = 0.0, 0.0, 0.0
+                tot_score = 0.0
                 u_id = p1_user_id if idx == 1 else None
                 lead_mail = "aarav@smail.iitm.ac.in" if idx == 1 else f"lead{idx}@smail.iitm.ac.in"
                 lead_name = "Aarav Sharma" if idx == 1 else f"Participant Lead {idx}"
