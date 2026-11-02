@@ -1519,8 +1519,29 @@ def health_check():
         }
     )
 
+# -------------------------------------------------------------
+# Hugging Face Spaces Gradio Integration (Zero-Docker Deployment)
+# -------------------------------------------------------------
+try:
+    import gradio as gr
+    def hf_status_check(query: str = ""):
+        return f"Paradesk Core Ground Operations Engine is active. Access the web portal at / or /login. Query: '{query}'"
+
+    hf_demo = gr.Interface(
+        fn=hf_status_check,
+        inputs=gr.Textbox(placeholder="Enter event name or team token...", label="Engine Probe"),
+        outputs=gr.Textbox(label="Status"),
+        title="Paradesk Ground Operations - Paradox '27",
+        description="The primary Paradesk portal runs at the root web address (/). This interface satisfies the Hugging Face Gradio SDK runtime without requiring Docker."
+    )
+    app = gr.mount_gradio_app(app, hf_demo, path="/gradio")
+except ImportError:
+    pass
+
 if __name__ == "__main__":
     import uvicorn
     host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", "8000"))
+    # Hugging Face Spaces default port is 7860; local fallback is 8000
+    default_port = 7860 if os.getenv("SPACE_ID") else 8000
+    port = int(os.getenv("PORT", str(default_port)))
     uvicorn.run("app:app", host=host, port=port, reload=False)

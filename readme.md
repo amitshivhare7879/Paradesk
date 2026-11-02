@@ -1,3 +1,14 @@
+---
+title: Paradesk Core Engine
+emoji: 🏢
+colorFrom: green
+colorTo: gray
+sdk: gradio
+sdk_version: 4.44.0
+app_file: app.py
+pinned: false
+---
+
 # Paradesk Core Engine — Multi-Event Ground Execution & Capacity-Recovery Portal
 **Engineered for Technical Hackathons & Coding Competitions at IIT Madras (Paradox '27)**
 
@@ -210,6 +221,28 @@ The database initializes with two realistic event scenarios:
 ---
 
 ## 7. Production Deployment & Local Setup
+
+### Deploy on Hugging Face Spaces (Zero-Docker, Free Tier & No Sleep)
+
+Hugging Face Spaces runs on free 2 vCPU / 16GB RAM instances and does not sleep aggressively like other free PaaS providers:
+
+1. Go to **[huggingface.co/new-space](https://huggingface.co/new-space)**.
+2. Enter Space name: `paradesk` (or your choice).
+3. Select **Gradio** as the Space SDK *(No Docker required)*.
+4. Visibility: **Public**.
+5. Click **Create Space**.
+6. Connect or push your code:
+   - **Method A (Direct Git Push to Hugging Face):**
+     ```bash
+     git remote add space https://huggingface.co/spaces/<YOUR_USERNAME>/paradesk
+     git push space main
+     ```
+   - **Method B (Duplicate / Sync from GitHub):**
+     In Space Settings, choose *Sync with GitHub* and connect `https://github.com/amitshivhare7879/Paradesk.git`.
+7. Hugging Face installs `requirements.txt` and executes `app.py`. Your full FastAPI Paradesk application is immediately live at:
+   - `https://<YOUR_USERNAME>-paradesk.hf.space`
+
+---
 
 ### Running Locally
 ```powershell
