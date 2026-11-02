@@ -1,1 +1,1 @@
-We are creating an app for paradox that hnadles teams adn student on boarding to thier final entry on the venue
+We are creating an app for paradox that hnadles teams adn student from on  boarding to thier final entry on the venue
