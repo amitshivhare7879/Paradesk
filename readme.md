@@ -1,213 +1,286 @@
 # Paradesk Core Engine — Multi-Event Ground Execution & Capacity-Recovery Portal
-**Engineered for Technical Hackathons & Coding Battles at IIT Madras (Paradox '27)**
+**Engineered for Technical Hackathons & Coding Competitions at IIT Madras (Paradox '27)**
 
 ---
 
 ## 1. Overview & Operational Problem Solved
 
-During technical hackathons and coding competitions at IIT Madras (held across the CRC complex), organizers face two acute bottlenecks:
-1. **The Registration Drop-Off & "Frozen Table" Bottleneck:** 20% to 30% of registered teams fail to show up on the day of the event. Organizers hesitate to give away empty desks wondering if teams are running late, keeping desks, LAN drops, and venue capacity "frozen" while motivated waitlisted students wait outside.
-2. **Disconnected Tools:** Raw Google Form registrations are disconnected from physical table allocations, problem statements, scoring rubrics, and the live leaderboard.
+Collegiate technical hackathons and competitive coding battles held at IIT Madras (across the Central Research Complex, CRC) experience two acute operational bottlenecks:
 
-**Paradesk** acts as the single operational bridge between raw Google Form registrations and live ground execution. It automates First-Come-First-Served (FCFS) desk allocations, runs an immediate Top-10 Standby queue in the lobby, enables 1-click 15-minute table reclamation, delivers digital boarding passes with problem statements and marking rubrics, and runs a live leaderboard with an automated 2-hour freeze window.
+1. **The Registration Drop-Off & "Frozen Table" Bottleneck:**  
+   Historically, **20% to 30% of pre-registered teams fail to show up physically** on the day of the event. Organizers hesitate to give away vacant desks, wondering if teams are running late. As a result, expensive venue capacity, high-wattage power strips, and Gigabit LAN drops remain frozen for absent squads, while enthusiastic campus walk-ins and waitlisted students wait outside in the lobby.
+2. **Disconnected Event Logistics:**  
+   Raw Google Form registration spreadsheets remain disconnected from physical table allocations, ground verification passes, problem statement releases, marking rubrics, and the live leaderboard.
+
+**Paradesk** acts as the single operational bridge between raw registrations and live on-campus execution. It automates First-Come-First-Served (FCFS) desk allocations, manages an active Top-10 Standby queue in the venue lobby, executes an atomic 15-minute table reclamation protocol, unlocks digital check-in passes 24 hours prior to kickoff, and powers a live leaderboard with an automated 2-hour freeze window.
 
 ---
 
-## 2. Technical Architecture & Clean White UI
+## 2. End-to-End Workflow & Decision Tree (Yes / No Logic)
+
+The diagram below outlines the complete lifecycle of an event in Paradesk, from participant sign-up and 24-hour token unlocking to ground verification, 15-minute desk reclamation, and the 2-hour leaderboard freeze:
+
+```mermaid
+flowchart TD
+    Start(["User Lands on Paradesk (/)"]) --> AuthCheck{"Authenticated?"}
+    
+    %% Authentication Branch
+    AuthCheck -- "No" --> Login["Go to /login or /register"]
+    Login --> RoleCheck{"User Role?"}
+    AuthCheck -- "Yes" --> RoleCheck
+
+    %% Participant Workflow
+    RoleCheck -- "PARTICIPANT" --> PartDash["Participant Dashboard (/participant/dashboard)"]
+    PartDash --> HasReg{"Registered for Event?"}
+    
+    HasReg -- "No" --> BrowseUpcoming["Browse Upcoming Competitions"]
+    BrowseUpcoming --> SubmitReg["Submit Team Registration"]
+    SubmitReg --> CapCheck{"Seats Available in Hall?"}
+    CapCheck -- "Yes" --> AllocSeat["Status: ALLOCATED + Desk Assigned"]
+    CapCheck -- "No" --> QueueStandby["Placed in STANDBY_TOP10 or WAITLIST Queue"]
+
+    HasReg -- "Yes" --> Check24h{"Is Event < 24 Hours Away?"}
+    Check24h -- "Yes" --> CodeUnlocked["Status: Active Pass\n6-Char Token (PX-CRC01) + Barcode Visible"]
+    Check24h -- "No" --> CodeLocked["Status: Code Locked\nUnlocks 24h Prior to Kickoff"]
+
+    PartDash --> EditRoster["Click 'Edit Squad Details'\nUpdate Team Name, Phone, Member Names"]
+
+    %% Ground Arrival Workflow
+    CodeUnlocked --> ArriveVenue["Arrive at CRC Complex Venue"]
+    ArriveVenue --> GroundDesk["Present Token to Ground Volunteer"]
+
+    %% Admin Workflow
+    RoleCheck -- "ADMIN" --> AdminDash["Admin Console (/dashboard)"]
+    AdminDash --> FloorplanView["Inspect Floorplan Matrix & Capacity Gauges"]
+    AdminDash --> CommsDispatch["Dispatch Email Broadcasts (24h Pass / Lobby Call)"]
+    AdminDash --> EditVenue["Edit Venue Location, Timing & Max Teams"]
+
+    GroundDesk --> AdminVerify{"Admin Enters Token / Name"}
+    AdminVerify -- "Valid Token" --> CheckinDone["Mark Status: CHECKED_IN\nSeated at Desk (CRC-T01)\nLAN & Power Active"]
+    AdminVerify -- "Invalid" --> RetryVerify["Error: Token Not Found"]
+
+    %% 15-Minute Cutoff & Reclamation
+    CheckinDone --> EventRuns["Hackathon Kickoff"]
+    EventRuns --> T15Minutes{"15 Minutes Past Kickoff?\nHit 'Sweep 15-Min No-Shows'"}
+    
+    T15Minutes --> CheckUnverified{"Allocated Team Checked In?"}
+    CheckUnverified -- "Yes" --> KeepDesk["Retain Table & Code"]
+    CheckUnverified -- "No" --> ReclaimDesk["Status: NO_SHOW\nDesk Reclaimed & Liberated"]
+    
+    ReclaimDesk --> StandbyWaiting{"Candidates in Lobby Standby?"}
+    StandbyWaiting -- "Yes" --> PromoteStandby["Promote Standby Queue in Order\nBind Reclaimed Desk Immediately"]
+    StandbyWaiting -- "No" --> TableVacant["Mark Desk Vacant for Walk-ins"]
+
+    %% Scoring & Leaderboard Freeze
+    KeepDesk --> JudgingPhase["Final Presentations & Code Review"]
+    PromoteStandby --> JudgingPhase
+    JudgingPhase --> EnterScores["Judges Enter Scores (Admin Console)\nInnovation (40) + Tech (35) + Pitch (25)"]
+    
+    EnterScores --> FreezeCheck{"2 Hours Before Final Announcement?"}
+    FreezeCheck -- "Yes" --> ToggleFreeze["Admin Hits 'Freeze 2-Hour Window'"]
+    ToggleFreeze --> PublicLB["Public Leaderboard (/leaderboard/{id})\nPadlock Banner: Scores Hidden / Locked"]
+    ToggleFreeze --> AdminLB["Admin View (?admin=1)\nBackstage Unmasked Live Telemetry"]
+```
+
+---
+
+## 3. Screen-by-Screen Guide
+
+Paradesk is built with a **clean white & slate color palette** (`bg-white`, `bg-slate-50`, `border-slate-200`, `text-slate-900`) with emerald, amber, and rose status badges. **Strictly no distracting blue gradients.**
+
+### Screen 1: Authentication Gateway (`/login` & `/register`)
+- **Sign In Card:** Clean login form with email and password fields.
+- **1-Click Quick Demo Accounts:**
+  - `Admin Demo` (`admin@iitm.ac.in` / `admin123`)
+  - `Participant Demo` (`aarav@smail.iitm.ac.in` / `participant123`)
+  - `Standby Lead Demo` (`vikram@smail.iitm.ac.in` / `participant123`)
+- **Participant Registration (`/register`):** Collects Full Name, College Email, Phone, and Password, automatically authenticating the student.
+
+---
+
+### Screen 2: Participant Personal Dashboard (`/participant/dashboard`)
+Designed specifically for student squads:
+- **My Registered Events:**
+  - **Check-in Token Card (24-Hour Rule):**
+    - **Within 24 Hours (Event 1):** Unlocked view displaying the unique check-in code (e.g. `PX-CRC01`), assigned desk (`CRC-T01`), and mock barcode ready for ground verification.
+    - **More Than 24 Hours Away (Event 2):** Padlock badge: *"Check-in code unlocks 24 hours before kickoff"*.
+- **Squad Roster Management:**
+  - Displays team name, lead contact, and list of members.
+  - **"Edit Squad Details" Modal:** Easily swap team members, update phone numbers, and change team names before kickoff.
+- **Judging & Evaluation Status:**
+  - Initially displays *"Evaluation Pending"* (as hackathon participants do not have pre-populated scores at kickoff).
+  - Displays Innovation (40), Technical Complexity (35), and Presentation (25) scores once evaluated by judges.
+- **Resources & Documentation:**
+  - Problem Statement brief with official PDF download link.
+  - Evaluation criteria & weightage rubric table.
+- **Upcoming Events Open for Registration:**
+  - Lists next week's competitions with a simple **"Register Team"** modal.
+  - Automatically places teams in the standby queue if the hall is at full capacity, without exposing internal table mechanics on the form.
+
+---
+
+### Screen 3: Lead Participant Digital Boarding Pass (`/portal/{unique_checkin_token}`)
+- Mobile-first, shareable digital pass accessible via unique token link.
+- **Dynamic Status Callouts:**
+  - `ALLOCATED`: Displays reserved table number (`CRC-T01`) and the 15-minute cutoff warning.
+  - `STANDBY_TOP10`: Displays exact queue rank (e.g., `Standby Priority #1`) and directs the squad to report to the CRC Lobby for immediate seat reclamation.
+  - `CHECKED_IN`: Confirmed seated badge with active LAN and power telemetry.
+  - `NO_SHOW`: Notifies squad that their desk was reclaimed due to non-reporting.
+
+---
+
+### Screen 4: Admin Ground Operations Command Center (`/dashboard`)
+- **Restricted Access:** Strictly protected by role-based guards; participants attempting to access this route are redirected to their portal.
+- **Multi-Event Switcher:** Seamlessly switch between concurrent events (e.g., *HackParadox 2027* in CRC 101 vs *AlgoStrike Battle* in CRC 202).
+- **Venue & Timing Editor:**
+  - **"Edit Venue & Timing" Modal:** Update event name, venue hall, kickoff date/time, team capacity, problem statements, and rubrics.
+- **Ground Verification & Desk Allocator:**
+  - Input field to scan barcodes or enter 6-character check-in tokens. Confirms team arrival and binds the physical table.
+- **15-Minute No-Show Sweeper:**
+  - 1-click trigger to mark unverified teams as `NO_SHOW`, reclaim tables, and automatically promote Top-10 Standby teams in queue order.
+- **Email Dispatch & Broadcast Center:**
+  - Dispatches automated campaigns:
+    1. *Broadcast 24h Check-in Passes* (to allocated desks).
+    2. *Urgent Standby Lobby Call* (to Top-10 queue squads).
+    3. *Venue Access, Power Banks & LAN Drop Guide*.
+    4. *Custom Announcement*.
+  - Outbox history table records timestamps, recipient counts, and delivery states.
+
+---
+
+### Screen 5: Physical Venue Floorplan Matrix
+- Visual grid representing every table in the hall (`CRC-T01` to `CRC-T30`):
+  - **Emerald:** Checked-in & verified seated.
+  - **Slate:** Allocated (pending arrival).
+  - **Dashed White:** Vacant / reclaimed.
+- **Hover Popover:** Displays team name, leader, phone number, and check-in token for fast ground coordination.
+
+---
+
+### Screen 6: Live & Frozen Public Leaderboard (`/leaderboard/{event_id}`)
+- **Podium Cards:** Gold (Rank 1), Silver (Rank 2), and Bronze (Rank 3) highlight cards.
+- **Standings Table:** Breakdown of Innovation (40), Technical (35), Presentation (25), and Total Score (100).
+- **2-Hour Leaderboard Freeze Window:**
+  - **Public View:** When frozen, displays a prominent lock banner (*"Leaderboard Frozen: 2-Hour Cutoff Window"*) and masks scores to maintain suspense for the closing ceremony.
+  - **Admin View (`?admin=1`):** Organizers and judges retain live unmasked telemetry backstage.
+
+---
+
+## 4. Pre-Configured Demo Accounts
+
+| Role | Email | Password | Access & Experience |
+|---|---|---|---|
+| **Administrator** | `admin@iitm.ac.in` | `admin123` | **Full Admin Console:** View all 35 teams, floorplan matrix, verify check-in tokens, run 15-min sweep, edit venue/timing, dispatch emails. |
+| **Participant (Allocated)** | `aarav@smail.iitm.ac.in` | `participant123` | **Team:** `NeuralForge` (Desk `CRC-T01`). Event is today in 2h, so check-in code `PX-CRC01` is **ACTIVE & UNLOCKED**. |
+| **Participant (Standby)** | `vikram@smail.iitm.ac.in` | `participant123` | **Team:** `CodeVanguard` (Queue #31, Standby Priority #1). Lobby standby pass active. |
+
+---
+
+## 5. Mock Events & Seed State
+
+The database initializes with two realistic event scenarios:
+
+1. **Event 1: "HackParadox 2027" (Today's Event — Starts in 2 Hours)**
+   - **Hall Capacity:** 30 tables (`CRC-T01` to `CRC-T30`).
+   - **Registrations:** Exactly **30 allocated teams** + **5 teams in the standby queue** (Total: 35 teams).
+   - **24-Hour Code Visibility:** `< 24 hours` $\rightarrow$ Check-in codes are **unlocked & visible** for ground scanning.
+   - **Initial Scores:** All teams initialize with **`0.0` points** (status: *Evaluation Pending*).
+2. **Event 2: "AlgoStrike Coding Battle" (Next Week's Event — Starts in 7 Days)**
+   - **Hall Capacity:** 20 tables (`ALGO-T01` to `ALGO-T20`).
+   - **24-Hour Code Visibility:** `> 24 hours` $\rightarrow$ Check-in codes are **locked** until 24 hours prior to kickoff.
+   - **Registration:** Visible under *Upcoming Events* for participants to sign up.
+
+---
+
+## 6. Technical Architecture & Database Schema
 
 - **Backend:** Python 3.10+ with **FastAPI**
-- **Database:** **SQLite3** with Write-Ahead Logging (`PRAGMA journal_mode=WAL;`), foreign keys enabled, and automatic seed generation.
-- **Frontend:** Server-rendered **Jinja2 Templates** styled with **Tailwind CSS** + **Font Awesome**.
-- **Design Aesthetic:** Clean, distraction-free **white & slate palette** (`bg-white`, `bg-slate-50`, `border-slate-200`, `text-slate-900`) with emerald, amber, and rose status badges. **Strictly no distracting blue gradients.**
-- **Deployment:** Fully self-contained, runnable with `uvicorn app:app --reload`.
+- **Session Security:** `PureCookieSessionMiddleware` utilizing Python standard library **HMAC-SHA256** signatures (`hmac`, `hashlib`, `base64`, `json`, `SimpleCookie`). Zero external dependency on `itsdangerous`.
+- **Database:** **SQLite3** with Write-Ahead Logging (`PRAGMA journal_mode=WAL;`), enforcing row-level concurrency and foreign key constraints.
+- **Frontend:** Server-rendered **Jinja2 Templates** styled with **Tailwind CSS CDN** + **Font Awesome**.
+
+### Schema Summary:
+- **`users`:** `id`, `email`, `password_hash`, `full_name`, `role` (`ADMIN` / `PARTICIPANT`), `phone`, `created_at`.
+- **`events`:** `id`, `name`, `slug`, `max_teams`, `max_members_per_team`, `venue_name`, `event_start`, `problem_statement_url`, `problem_statement_text`, `rubric_json`, `freeze_hours_before_end`, `is_leaderboard_frozen`.
+- **`desks`:** `id`, `event_id`, `desk_code`, `is_occupied`, `assigned_team_id`.
+- **`teams`:** `id`, `event_id`, `user_id`, `team_name`, `lead_name`, `lead_email`, `lead_phone`, `member_count`, `member_names`, `registration_timestamp`, `queue_position`, `status` (`ALLOCATED`, `STANDBY_TOP10`, `WAITLISTED`, `CHECKED_IN`, `NO_SHOW`), `unique_checkin_token`, `assigned_desk_id`, `checkin_timestamp`, `score_innovation`, `score_technical`, `score_presentation`, `total_score`.
+- **`emails_sent`:** `id`, `event_id`, `subject`, `recipient_count`, `recipient_type`, `body_preview`, `sent_timestamp`, `status`.
+- **`audit_logs`:** `id`, `event_id`, `timestamp`, `action`, `details`, `badge_color`.
 
 ---
 
-## 3. Database Schema
+## 7. Production Deployment & Local Setup
 
-### `events`
-| Column | Type | Description |
-|---|---|---|
-| `id` | `INTEGER PRIMARY KEY` | Auto-incrementing identifier |
-| `name` | `TEXT` | e.g. "HackParadox 2027", "AlgoStrike Coding Battle" |
-| `slug` | `TEXT UNIQUE` | URL-safe slug (e.g. `hackparadox-2027`) |
-| `max_teams` | `INTEGER` | Table/team capacity (e.g. 30 or 50) |
-| `max_members_per_team` | `INTEGER` | Team size limit (default 4) |
-| `venue_name` | `TEXT` | Campus venue (e.g. "CRC Complex Hall 101") |
-| `event_start` | `DATETIME` | Scheduled kickoff timestamp |
-| `problem_statement_url` | `TEXT` | URL to problem statement PDF |
-| `problem_statement_text` | `TEXT` | Problem abstract/description |
-| `rubric_json` | `TEXT` | Evaluation criteria, weightage, and max scores in JSON |
-| `freeze_hours_before_end` | `INTEGER` | Duration of leaderboard lock window (default 2 hrs) |
-| `is_leaderboard_frozen` | `INTEGER` | 1 if public leaderboard is locked, 0 if live |
+### Running Locally
+```powershell
+# 1. Install dependencies
+pip install -r requirements.txt
 
-### `desks`
-| Column | Type | Description |
-|---|---|---|
-| `id` | `INTEGER PRIMARY KEY` | Auto-incrementing table ID |
-| `event_id` | `INTEGER` | Foreign key referencing `events(id)` ON DELETE CASCADE |
-| `desk_code` | `TEXT` | Physical table label (e.g. `CRC-T01`, `CRC-T02`) |
-| `is_occupied` | `INTEGER` | 1 if occupied/allocated, 0 if vacant |
-| `assigned_team_id` | `INTEGER` | References `teams(id)` |
-
-### `teams`
-| Column | Type | Description |
-|---|---|---|
-| `id` | `INTEGER PRIMARY KEY` | Auto-incrementing team ID |
-| `event_id` | `INTEGER` | Foreign key referencing `events(id)` ON DELETE CASCADE |
-| `team_name` | `TEXT` | Unique team name |
-| `lead_name` | `TEXT` | Team leader's full name |
-| `lead_email` | `TEXT` | Leader's email address |
-| `lead_phone` | `TEXT` | Contact phone number |
-| `member_count` | `INTEGER` | Active member count (e.g. 1-4) |
-| `registration_timestamp`| `DATETIME`| Registration timestamp used for FCFS sequencing |
-| `queue_position` | `INTEGER` | Overall registration queue rank |
-| `status` | `TEXT` | `ALLOCATED`, `STANDBY_TOP10`, `WAITLISTED`, `CHECKED_IN`, `NO_SHOW` |
-| `unique_checkin_token` | `TEXT UNIQUE` | 6-char alphanumeric code (e.g. `PX-A7K92B`) |
-| `assigned_desk_id` | `INTEGER` | References `desks(id)` |
-| `checkin_timestamp` | `DATETIME` | Recorded on physical check-in |
-| `score_innovation` | `REAL` | Score (0-40) |
-| `score_technical` | `REAL` | Score (0-35) |
-| `score_presentation` | `REAL` | Score (0-25) |
-| `total_score` | `REAL` | Sum of all evaluation categories (0-100) |
-
-### `audit_logs`
-Chronological operational stream capturing event creations, CSV imports, check-ins, no-show table reclamations, standby promotions, and judge scoring actions.
-
----
-
-## 4. Key Workflows & Features
-
+# 2. Launch application
+uvicorn app:app --reload
 ```
-[Raw G-Form CSV] 
-       │
-       ▼ (Sort by Timestamp: FCFS)
- ┌───────────────────────────────────────────────────────────────┐
- │ Ranks 1 to max_teams         ──► ALLOCATED (Assigned Desk)    │
- │ Ranks max_teams+1 to +10     ──► STANDBY_TOP10 (Lobby Call)   │
- │ Ranks > max_teams+10         ──► WAITLISTED (Remote Standby)  │
- └───────────────────────────────────────────────────────────────┘
-       │
-       ▼
- [Participant Lead Portal: /portal/{token}]
- ├── Unique Check-In Token & Mock Barcode
- ├── Assigned Desk / Priority Standby Callout
- ├── Problem Statement Abstract & Official PDF Link
- └── Marking Rubric Criteria (Innovation, Tech, Presentation)
-       │
-       ▼ (Kickoff + 15 Minutes)
- [15-Minute No-Show Protocol: /admin/{event_id}/sweep-noshows]
- ├── Unverified ALLOCATED teams ──► Marked NO_SHOW (Desks Reclaimed)
- └── STANDBY_TOP10 Candidates   ──► Immediately PROMOTED to Desks
-       │
-       ▼
- [Judging & 2-Hour Leaderboard Freeze]
- ├── Judges record scores per criteria (Max 100 pts)
- ├── 2 Hours Before End: Admin hits "Freeze 2-Hour Window"
- ├── Public View (/leaderboard/{event_id}): Padlock banner, scores locked
- └── Admin View (?admin=1): Backstage live telemetry for judges & organizers
-```
+Open **http://127.0.0.1:8000** in your browser.
 
----
-
-## 5. Demo Credentials
-
-| Role | Email | Password | Access / Scope |
-|---|---|---|---|
-| **Admin** | `admin@iitm.ac.in` | `admin123` | Full Ground Admin Console: All tables, check-in verifier, 15-min sweep, mail dispatch, venue/timing editor |
-| **Participant (Allocated)** | `aarav@smail.iitm.ac.in` | `participant123` | Team: **NeuralForge** (Queue #1, Desk `CRC-T01` in Today's Event). Check-in code is **ACTIVE** (< 24h) |
-| **Participant (Standby)** | `vikram@smail.iitm.ac.in` | `participant123` | Team: **CodeVanguard** (Queue #31, Standby Priority #1 in Today's Event). Lobby standby pass |
-
----
-
-## 6. Mock Events & Seed State
-
-1. **Event 1: "HackParadox 2027" (Today's Event)**
-   - **Timing:** Starts today in 2 hours (`< 24h` $\rightarrow$ Check-in codes are **unlocked & active** for ground scanning).
-   - **Capacity:** Exactly **30 desks** (`CRC-T01` to `CRC-T30`).
-   - **Registrations:** Exactly **30 allocated teams** (Desks 1 to 30) + **5 teams in the standby queue** (Queue #31 to #35).
-   - Demonstrates the live ground check-in desk, floorplan matrix, 15-minute no-show reclamation, and standby promotions.
-2. **Event 2: "AlgoStrike Coding Battle" (Next Week's Event)**
-   - **Timing:** Scheduled next week in 7 days (`> 24h`).
-   - **24-Hour Rule:** Check-in codes are **LOCKED** ("Unlocks 24 hours prior to event").
-   - Visible on the participant dashboard under **"Upcoming Events Open for Registration"**, where users can sign up their squads. If capacity is filled, new registrations are automatically queued without cluttering the registration form with internal desk codes.
-
----
-
-## 7. Production Deployment Guide
-
-Paradesk is fully hardened and deployment-ready across multiple deployment targets:
-
-### Option A: Docker / Container Deployment (Recommended)
-Build and run with a persistent SQLite database volume:
+### Docker & Container Deployment
 ```bash
-# Build and launch in background
+# Build and run with persistent storage
 docker compose up -d --build
 
-# Inspect logs
-docker compose logs -f
-
-# Verify container health
+# Check health endpoint
 curl http://localhost:8000/health
 ```
 
-Or run standalone:
-```bash
-docker build -t paradesk:latest .
-docker run -d -p 8000:8000 -v paradesk_data:/app/data --name paradesk-prod paradesk:latest
-```
+### Cloud Platforms (Render, Railway, Heroku, Fly.io)
+- **`Procfile`:** `web: uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}`
+- **`render.yaml`:** Pre-configured Infrastructure-as-Code Blueprint with auto-deploy and health checks.
 
-### Option B: 1-Click Cloud Deployment (Render / Railway / Fly.io / Heroku)
-The repo contains pre-configured deployment manifests:
-- **`Procfile`**: Automatically used by Render, Railway, and Heroku.
-- **`render.yaml`**: Pre-configured Blueprint for Render with auto-deploy and health checks.
-- Environment variables:
-  - `PORT`: Automatically set by the hosting provider.
-  - `SECRET_KEY`: Set to a strong random secret.
-  - `SECURE_COOKIES`: Set to `true` when HTTPS is enabled.
+---
 
-### Option C: Traditional Linux VM / Server (Nginx + Systemd)
-Run as a systemd service with Gunicorn or Uvicorn:
-```bash
-pip install -r requirements.txt
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:8000
-```
+## 8. Automated Verification Suite
 
-### Option D: Quickstart & Running Locally
-```powershell
-pip install -r requirements.txt
-uvicorn app:app --reload
-```
-Open **http://127.0.0.1:8000** in your browser. Use the demo account buttons or enter the credentials above to explore!
+Run all 10 automated test suites covering authentication, 24-hour code unlock logic, ground check-in, 15-minute sweep, and the `/health` endpoint:
 
-### Step 3: Run the Automated Verification Suite
 ```powershell
 python direct_test.py
 ```
 
+**Output:**
+```
+[TEST 1] Initializing fresh database with users and seed events...
+  [OK] Admin and Participant users created with verified roles.
+  [OK] Event 1 'HackParadox 2027' (Today) and Event 2 'AlgoStrike Coding Battle' (Next Week) provisioned.
+  [OK] Event 1 has exactly 30 desks, 30 allocated teams, and 5 in the standby queue (Total = 35 teams).
+[TEST 2] Testing Authentication Gateway (Login & Registration)...
+  [OK] Invalid credentials safely rejected.
+  [OK] Admin login succeeded, established session with role 'ADMIN'.
+  [OK] Participant login succeeded, established session with role 'PARTICIPANT'.
+  [OK] New participant registered and automatically authenticated.
+[TEST 3] Testing Participant Dashboard & 24-Hour Code Visibility Rule...
+  [OK] Participant portal for today's event correctly displays unlocked check-in code and assigned desk.
+[TEST 4] Testing Participant Team Roster Update...
+  [OK] Participant updated team details and member names successfully.
+[TEST 5] Testing Event Registration & Capacity Overflow Queue...
+  [OK] Full event automatically placed new registration into Queue Position #36 (STANDBY_TOP10).
+[TEST 6] Testing Admin Dashboard & Event Details Editing...
+  [OK] Admin Dashboard rendered cleanly with floorplan and capacity gauges.
+  [OK] Admin updated event title, venue, and timing successfully.
+[TEST 7] Testing Email Notification Dispatch System...
+  [OK] Dispatched email broadcast to 30 recipients.
+[TEST 8] Testing Ground Check-In by Code & Desk Assignment...
+  [OK] Ground check-in successfully verified 'SyntaxSquad' via code 'PX-CRC06'.
+[TEST 9] Testing 15-Minute Sweep Protocol Promoting Standby Top-10...
+  [OK] 15-minute sweep swept 24 no-shows and promoted standby team 'CodeVanguard' into a reclaimed desk!
+[TEST 10] Testing Production Health Check Endpoint...
+  [OK] /health endpoint returned 200 OK with database connection verified.
+
+=================================================================
+ALL 10 TEST SUITES PASSED! DEPLOY-READY & PRODUCTION HARDENED.
+=================================================================
+```
+
 ---
 
-## 8. Endpoints Reference
+## 9. Companion Documentation
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/dashboard` | Multi-event ground operations command center |
-| `POST` | `/admin/events` | Provision a new competition / event with desk capacity |
-| `POST` | `/admin/events/{event_id}/update-resources` | Update Problem Statement and Rubric JSON |
-| `POST` | `/admin/events/{event_id}/toggle-freeze` | Toggle 2-hour leaderboard freeze window |
-| `POST` | `/events/{event_id}/import-csv` | Upload G-Form CSV for automated FCFS allocation |
-| `GET` | `/events/{event_id}/sample-csv` | Download sample Google Form CSV template |
-| `GET` | `/portal/{unique_checkin_token}` | Lead participant digital pass & resources |
-| `POST` | `/admin/{event_id}/checkin` | Fast ground check-in by token or team name |
-| `POST` | `/admin/{event_id}/sweep-noshows` | 15-minute protocol: sweep no-shows, promote standby |
-| `POST` | `/admin/{event_id}/score` | Record judge scores across rubric dimensions |
-| `GET` | `/leaderboard/{event_id}` | Public leaderboard with freeze banner |
-| `GET` | `/leaderboard/{event_id}?admin=1` | Admin unmasked live leaderboard |
-| `POST` | `/admin/reset` | Reseed system to initial Paradox'27 state |
-
----
-
-## 7. Companion Documentation
-
-- **`TASK_2_2_DROP_OFF_SOLUTION.md`:** Detailed strategic blueprint analyzing root causes of drop-off (impulse registration, solo fear, team attrition, lack of schedule visibility, ghost tables) and the full technical operations plan for the Technicals Department.
-- **`google_sheets_apps_script.js`:** Google Apps Script connecting directly to Google Sheets for automated confirmation emails, 48-hour hard RSVP, and standby notifications.
+- **`TASK_2_2_DROP_OFF_SOLUTION.md`:** Strategic operations blueprint covering the 5 root causes of collegiate hackathon drop-offs and the multi-phase technical engagement flow.
+- **`google_sheets_apps_script.js`:** Google Sheets companion automation script for form ingestion, 48-hour hard RSVPs, and standby broadcasts.
