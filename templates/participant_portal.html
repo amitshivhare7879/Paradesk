@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lead Participant Pass | Paradesk - Paradox'27</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased py-8 px-4 flex flex-col justify-between">
+
+    <div class="max-w-xl mx-auto w-full space-y-6">
+
+        <!-- Top Header Bar -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-sm tracking-wider">
+                    P<span class="text-emerald-400">X</span>
+                </div>
+                <div>
+                    <span class="font-bold text-sm text-slate-900">Paradesk Participant Pass</span>
+                    <span class="text-[10px] text-slate-400 block font-medium">IIT Madras Paradox '27 Ground Ops</span>
+                </div>
+            </div>
+            <a href="/leaderboard/{{ team.event_id }}" target="_blank" class="text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-sm transition flex items-center">
+                <i class="fa-solid fa-trophy mr-1.5 text-amber-500"></i> Live Standings
+            </a>
+        </div>
+
+        <!-- Digital Boarding Pass Card -->
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
+            
+            <!-- Pass Header with Status Badge -->
+            <div class="p-6 border-b border-slate-100">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                        {% if team.status == 'CHECKED_IN' %}
+                            bg-emerald-100 text-emerald-800 border border-emerald-200
+                        {% elif team.status == 'ALLOCATED' %}
+                            bg-slate-900 text-white
+                        {% elif team.status == 'STANDBY_TOP10' %}
+                            bg-amber-100 text-amber-800 border border-amber-200
+                        {% elif team.status == 'NO_SHOW' %}
+                            bg-rose-100 text-rose-800 border border-rose-200
+                        {% else %}
+                            bg-slate-100 text-slate-700 border border-slate-200
+                        {% endif %}">
+                        {% if team.status == 'CHECKED_IN' %}
+                            <i class="fa-solid fa-check mr-1 text-emerald-600"></i> Confirmed Seated
+                        {% elif team.status == 'ALLOCATED' %}
+                            <i class="fa-solid fa-chair mr-1 text-emerald-400"></i> Table Allocated
+                        {% elif team.status == 'STANDBY_TOP10' %}
+                            <i class="fa-solid fa-clock mr-1 text-amber-600"></i> Standby (Lobby Call)
+                        {% elif team.status == 'NO_SHOW' %}
+                            <i class="fa-solid fa-triangle-exclamation mr-1 text-rose-600"></i> Seat Forfeited (No-Show)
+                        {% else %}
+                            <i class="fa-solid fa-list-ol mr-1 text-slate-400"></i> Remote Waitlist
+                        {% endif %}
+                    </span>
+                    <span class="text-xs font-mono font-semibold text-slate-400">Queue #{{ team.queue_position }}</span>
+                </div>
+
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">{{ team.team_name }}</h1>
+                <p class="text-xs text-slate-500 mt-1 font-medium">{{ team.event_name }} &bull; {{ team.venue_name }}</p>
+            </div>
+
+            <!-- Operational Status Callout Banner -->
+            <div class="p-6 
+                {% if team.status == 'CHECKED_IN' %}
+                    bg-emerald-50/50 border-b border-emerald-100
+                {% elif team.status == 'ALLOCATED' %}
+                    bg-slate-50 border-b border-slate-100
+                {% elif team.status == 'STANDBY_TOP10' %}
+                    bg-amber-50/70 border-b border-amber-100
+                {% elif team.status == 'NO_SHOW' %}
+                    bg-rose-50 border-b border-rose-100
+                {% else %}
+                    bg-slate-50 border-b border-slate-100
+                {% endif %}">
+
+                {% if team.status == 'ALLOCATED' %}
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex flex-col items-center justify-center font-mono font-black text-sm shrink-0 shadow-sm">
+                        <span class="text-[9px] text-slate-400">DESK</span>
+                        <span class="text-emerald-400">{{ team.desk_code }}</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">Your Table is Reserved: {{ team.desk_code }}</h3>
+                        <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                            Report to <strong>{{ team.venue_name }}</strong> before kickoff. Present your token below at the check-in desk. Unclaimed tables are swept 15 minutes after start!
+                        </p>
+                    </div>
+                </div>
+
+                {% elif team.status == 'STANDBY_TOP10' %}
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500 text-white flex flex-col items-center justify-center font-mono font-black text-sm shrink-0 shadow-sm">
+                        <span class="text-[9px] text-amber-100">PRIORITY</span>
+                        <span>#{{ standby_rank or 1 }}</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-amber-900">Top-10 Ground Standby Active!</h3>
+                        <p class="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                            You are ranked <strong>#{{ standby_rank or 1 }}</strong> in the immediate standby queue. <strong>Please be physically present at the {{ team.venue_name }} Lobby.</strong> Unreported tables will be re-assigned directly to you at the 15-minute sweep!
+                        </p>
+                    </div>
+                </div>
+
+                {% elif team.status == 'CHECKED_IN' %}
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex flex-col items-center justify-center font-mono font-black text-sm shrink-0 shadow-sm">
+                        <i class="fa-solid fa-check-double text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-emerald-950">Checked In at Desk {{ team.desk_code }}</h3>
+                        <p class="text-xs text-emerald-800 mt-0.5 leading-relaxed">
+                            Your squad is physically verified. LAN ports, power banks, and event telemetry are active at your assigned desk.
+                        </p>
+                    </div>
+                </div>
+
+                {% elif team.status == 'NO_SHOW' %}
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex flex-col items-center justify-center font-mono font-black text-sm shrink-0 shadow-sm">
+                        <i class="fa-solid fa-ban text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-rose-950">Seat Forfeited Due to Cutoff</h3>
+                        <p class="text-xs text-rose-800 mt-0.5 leading-relaxed">
+                            Your reservation was reclaimed during the 15-minute cutoff and allocated to a standby queue candidate. Visit the helpdesk for inquiries.
+                        </p>
+                    </div>
+                </div>
+
+                {% else %}
+                <div class="flex items-start space-x-4">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-200 text-slate-700 flex flex-col items-center justify-center font-mono font-black text-sm shrink-0">
+                        <i class="fa-solid fa-hourglass-half text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900">Waitlist Queue Position: {{ team.queue_position }}</h3>
+                        <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                            You are on the general remote waitlist. If higher standby squads do not report, our ground coordinators will broadcast SMS/email updates.
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Pass Core Details -->
+            <div class="p-6 space-y-6">
+                
+                <!-- Unique Token Verification Block -->
+                <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center space-y-2">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ground Check-In Token</p>
+                    <div class="font-mono text-3xl font-black text-slate-900 tracking-wider">
+                        {{ team.unique_checkin_token }}
+                    </div>
+                    <p class="text-[11px] text-slate-500">Show this code or barcode to the ground volunteer at check-in</p>
+                    
+                    <!-- Visual Mock Barcode Pattern -->
+                    <div class="flex justify-center items-center space-x-1 pt-2 opacity-80 h-10">
+                        <div class="w-1.5 h-full bg-slate-900"></div>
+                        <div class="w-0.5 h-full bg-slate-900"></div>
+                        <div class="w-2 h-full bg-slate-900"></div>
+                        <div class="w-1 h-full bg-slate-900"></div>
+                        <div class="w-3 h-full bg-slate-900"></div>
+                        <div class="w-1 h-full bg-slate-900"></div>
+                        <div class="w-0.5 h-full bg-slate-900"></div>
+                        <div class="w-2.5 h-full bg-slate-900"></div>
+                        <div class="w-1 h-full bg-slate-900"></div>
+                        <div class="w-2 h-full bg-slate-900"></div>
+                        <div class="w-0.5 h-full bg-slate-900"></div>
+                        <div class="w-1.5 h-full bg-slate-900"></div>
+                        <div class="w-2 h-full bg-slate-900"></div>
+                    </div>
+                </div>
+
+                <!-- Squad Meta Grid -->
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-slate-400 block font-medium">Team Leader</span>
+                        <span class="font-bold text-slate-900 block mt-0.5">{{ team.lead_name }}</span>
+                        <span class="text-slate-500 text-[11px] font-mono">{{ team.lead_phone }}</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                        <span class="text-slate-400 block font-medium">Squad Size</span>
+                        <span class="font-bold text-slate-900 block mt-0.5">{{ team.member_count }} Members</span>
+                        <span class="text-slate-500 text-[11px] font-mono">Max Capacity</span>
+                    </div>
+                </div>
+
+                <!-- Live Kickoff Countdown -->
+                <div class="p-4 rounded-2xl bg-white border border-slate-200 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Scheduled Kickoff</span>
+                        <span class="text-xs font-semibold text-slate-800">{{ team.event_start }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Venue Hall</span>
+                        <span class="text-xs font-semibold text-slate-800">{{ team.venue_name }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem Statement & Marking Rubric Accordion -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-file-code text-slate-700"></i>
+                    <h3 class="text-sm font-bold text-slate-900">Event Resources & Rubric</h3>
+                </div>
+                {% if team.problem_statement_url %}
+                <a href="{{ team.problem_statement_url }}" target="_blank" class="text-xs font-semibold text-slate-900 hover:underline flex items-center">
+                    <i class="fa-solid fa-file-pdf mr-1 text-rose-500"></i> Official PS PDF
+                </a>
+                {% endif %}
+            </div>
+
+            {% if team.problem_statement_text %}
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 leading-relaxed">
+                <p class="font-bold text-slate-900 mb-1">Problem Statement Brief:</p>
+                <p>{{ team.problem_statement_text }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Scoring Rubric Breakdown -->
+            {% if rubric %}
+            <div class="space-y-2 pt-2">
+                <p class="text-xs font-bold text-slate-900 uppercase tracking-wider">Evaluation Rubric</p>
+                <div class="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden text-xs">
+                    {% for item in rubric %}
+                    <div class="p-3 bg-white flex items-center justify-between">
+                        <div>
+                            <span class="font-semibold text-slate-800">{{ item.criteria }}</span>
+                            {% if item.weight %}
+                            <span class="text-[11px] text-slate-400 block">Weightage: {{ item.weight }}%</span>
+                            {% endif %}
+                        </div>
+                        <span class="px-2 py-1 bg-slate-100 rounded text-slate-700 font-mono font-bold text-xs">
+                            Max {{ item.max or item.weight }} pts
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-slate-400 pt-2 pb-6">
+            <p>Paradesk Ground Logistics Engine &bull; Indian Institute of Technology Madras</p>
+            <p class="text-[11px] mt-0.5">Need help? Head to the CRC Ground Registration Control Desk</p>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | Paradesk - Paradox'27 IIT Madras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between p-4 antialiased">
+
+    <!-- Top Minimal Brand -->
+    <header class="max-w-md mx-auto w-full pt-8 pb-4 flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black tracking-wider text-base shadow-sm">
+                P<span class="text-emerald-400">X</span>
+            </div>
+            <div>
+                <span class="font-bold text-base text-slate-900 tracking-tight">Paradesk Core</span>
+                <span class="text-[10px] text-slate-400 block font-medium">IIT Madras Paradox '27 Ground Ops</span>
+            </div>
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            Auth Gateway
+        </span>
+    </header>
+
+    <!-- Main Auth Card -->
+    <main class="max-w-md mx-auto w-full my-auto">
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+            
+            <div class="mb-6">
+                <h1 class="text-xl font-bold text-slate-900">Sign in to your account</h1>
+                <p class="text-xs text-slate-500 mt-1">Access your event dashboard, ground check-in pass, and table allocations</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% if flash_error %}
+            <div class="p-3.5 mb-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center space-x-2">
+                <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+                <span class="font-medium">{{ flash_error }}</span>
+            </div>
+            {% endif %}
+
+            {% if flash_success %}
+            <div class="p-3.5 mb-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center space-x-2">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                <span class="font-medium">{{ flash_success }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form action="/login" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Email Address</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="email" name="email" id="input-email" required placeholder="you@smail.iitm.ac.in" 
+                               class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:bg-white focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600">Password</label>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="password" name="password" id="input-password" required placeholder="••••••••" 
+                               class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:bg-white focus:outline-none transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-2">
+                    <span>Sign In</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <!-- Quick Demo Credentials Box -->
+            <div class="mt-6 pt-6 border-t border-slate-100">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5 text-center">Quick Demo Accounts</p>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="fillCreds('admin@iitm.ac.in', 'admin123')" 
+                            class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition text-xs">
+                        <div class="flex items-center space-x-1.5 font-bold text-slate-900">
+                            <i class="fa-solid fa-shield text-[10px] text-slate-700"></i>
+                            <span>Admin Demo</span>
+                        </div>
+                        <span class="text-[10px] text-slate-500 block font-mono mt-0.5">admin@iitm.ac.in</span>
+                    </button>
+
+                    <button type="button" onclick="fillCreds('aarav@smail.iitm.ac.in', 'participant123')" 
+                            class="p-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-left transition text-xs">
+                        <div class="flex items-center space-x-1.5 font-bold text-slate-900">
+                            <i class="fa-solid fa-user-check text-[10px] text-emerald-600"></i>
+                            <span>Participant Demo</span>
+                        </div>
+                        <span class="text-[10px] text-slate-500 block font-mono mt-0.5">aarav@smail.iitm.ac.in</span>
+                    </button>
+                </div>
+                <div class="mt-2 text-center">
+                    <button type="button" onclick="fillCreds('vikram@smail.iitm.ac.in', 'participant123')" 
+                            class="text-[10px] text-amber-700 hover:underline font-medium">
+                        Try Standby Queue Lead (vikram@smail.iitm.ac.in)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sign Up Switch -->
+            <div class="mt-6 text-center text-xs text-slate-500">
+                <span>Don't have an account yet?</span>
+                <a href="/register" class="font-bold text-slate-900 hover:underline ml-1">Create an account</a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-md mx-auto w-full py-6 text-center text-xs text-slate-400">
+        <p>Paradesk Ground Operations Engine &bull; IIT Madras Paradox '27</p>
+    </footer>
+
+    <script>
+        function fillCreds(email, password) {
+            document.getElementById('input-email').value = email;
+            document.getElementById('input-password').value = password;
+        }
+    </script>
+</body>
+</html>

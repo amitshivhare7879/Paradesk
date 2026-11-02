@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | Paradesk - Paradox'27 IIT Madras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-between p-4 antialiased">
+
+    <!-- Top Minimal Brand -->
+    <header class="max-w-md mx-auto w-full pt-8 pb-4 flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black tracking-wider text-base shadow-sm">
+                P<span class="text-emerald-400">X</span>
+            </div>
+            <div>
+                <span class="font-bold text-base text-slate-900 tracking-tight">Paradesk Core</span>
+                <span class="text-[10px] text-slate-400 block font-medium">IIT Madras Paradox '27 Ground Ops</span>
+            </div>
+        </div>
+        <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+            Participant Sign Up
+        </span>
+    </header>
+
+    <!-- Main Registration Card -->
+    <main class="max-w-md mx-auto w-full my-auto">
+        <div class="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+            
+            <div class="mb-6">
+                <h1 class="text-xl font-bold text-slate-900">Create Participant Account</h1>
+                <p class="text-xs text-slate-500 mt-1">Register to manage your hackathon teams, view boarding passes, and track table allocations</p>
+            </div>
+
+            <!-- Flash Error -->
+            {% if flash_error %}
+            <div class="p-3.5 mb-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-center space-x-2">
+                <i class="fa-solid fa-circle-exclamation text-rose-600"></i>
+                <span class="font-medium">{{ flash_error }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Registration Form -->
+            <form action="/register" method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Full Name</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-user absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" name="full_name" required placeholder="e.g. Ananya Sen" 
+                               class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:bg-white focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">College / Student Email</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="email" name="email" required placeholder="rollnumber@smail.iitm.ac.in" 
+                               class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:bg-white focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Mobile Phone Number</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="tel" name="phone" required placeholder="+91 98401 XXXXX" 
+                               class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:bg-white focus:outline-none transition">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Choose Password</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="password" name="password" required placeholder="Minimum 6 characters" minlength="6"
+                               class="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:bg-white focus:outline-none transition">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-2">
+                    <span>Create Account & Continue</span>
+                    <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-xs text-slate-500">
+                <span>Already registered?</span>
+                <a href="/login" class="font-bold text-slate-900 hover:underline ml-1">Sign In</a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-md mx-auto w-full py-6 text-center text-xs text-slate-400">
+        <p>Paradesk Ground Operations Engine &bull; IIT Madras Paradox '27</p>
+    </footer>
+
+</body>
+</html>

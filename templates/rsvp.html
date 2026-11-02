@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Your RSVP — Paradox'27 Technical Events | IIT Madras</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col items-center justify-center p-4 font-sans antialiased selection:bg-slate-900 selection:text-white">
+
+  <div class="max-w-xl w-full bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+    
+    <!-- Header & Badge -->
+    <div class="flex items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+          <i data-lucide="badge-check" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-slate-900 tracking-tight">Paradox'27 Hackathon</h1>
+          <p class="text-xs text-slate-500">48-Hour Hard RSVP & Readiness Portal</p>
+        </div>
+      </div>
+      <span class="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold 
+        {% if team.status == 'CONFIRMED_RSVP' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+        {% elif team.status == 'CHECKED_IN' %}bg-cyan-50 text-cyan-700 border border-cyan-200
+        {% elif team.status == 'NO_SHOW' %}bg-rose-50 text-rose-700 border border-rose-200
+        {% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+        {{ team.status }}
+      </span>
+    </div>
+
+    <!-- Team Details Card -->
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-5 space-y-2.5 text-xs">
+      <div class="flex justify-between items-center border-b border-slate-200/80 pb-2">
+        <span class="text-slate-500 font-medium">Team Name:</span>
+        <span class="text-slate-900 font-bold text-sm">{{ team.team_name }}</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500 font-medium">Team Lead:</span>
+        <span class="text-slate-800 font-medium">{{ team.lead_name }} ({{ team.lead_phone }})</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500 font-medium">Original Squad Size:</span>
+        <span class="text-slate-800 font-mono">{{ team.original_team_size }} Members</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500 font-medium">Venue:</span>
+        <span class="text-slate-800">Central Research Complex (CRC), IIT Madras</span>
+      </div>
+      <div class="flex justify-between items-center">
+        <span class="text-slate-500 font-medium">Assigned Desk:</span>
+        <span class="font-mono font-bold text-emerald-700">{{ team.desk_id or 'Allocated Atomically at Ground Check-in' }}</span>
+      </div>
+    </div>
+
+    <!-- Status Message or Action Form -->
+    {% if team.status == 'CONFIRMED_RSVP' %}
+      <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-3 mb-6">
+        <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-bold text-emerald-900 text-sm">Your Spot is Confirmed & Locked!</p>
+          <p class="mt-1 text-emerald-700 leading-relaxed">
+            Your table reservation at CRC Hall is primed. Report to the venue check-in desk by 08:30 AM with your student IDs. Power strips and 1Gbps LAN drops will be active.
+          </p>
+        </div>
+      </div>
+    {% elif team.status == 'CHECKED_IN' %}
+      <div class="p-4 rounded-xl bg-cyan-50 border border-cyan-200 text-cyan-800 text-xs flex items-start gap-3 mb-6">
+        <i data-lucide="laptop" class="w-5 h-5 text-cyan-600 shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-bold text-cyan-900 text-sm">Already Checked In On-Ground!</p>
+          <p class="mt-1 text-cyan-700 leading-relaxed">
+            Your team is currently seated at <strong class="text-slate-900 font-mono">{{ team.desk_id }}</strong> with {{ team.present_members_count }} members. Happy hacking!
+          </p>
+        </div>
+      </div>
+    {% elif team.status == 'NO_SHOW' %}
+      <div class="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-3 mb-6">
+        <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-600 shrink-0 mt-0.5"></i>
+        <div>
+          <p class="font-bold text-rose-900 text-sm">Reservation Revoked (15-Min Cutoff)</p>
+          <p class="mt-1 text-rose-700 leading-relaxed">
+            Your table was reclaimed and assigned to a standby team. If you are physically present, speak with the Ground Incident Desk to request standby admittance.
+          </p>
+        </div>
+      </div>
+    {% else %}
+      <!-- Confirmation Form -->
+      <form action="/rsvp/{{ team.rsvp_token }}" method="POST" class="space-y-4 mb-6">
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 space-y-1.5">
+          <p class="font-semibold text-slate-900 flex items-center gap-1.5">
+            <i data-lucide="clock" class="w-4 h-4 text-slate-700"></i>
+            48-Hour Participation Commitment
+          </p>
+          <p class="text-[11px] text-slate-500 leading-relaxed">
+            By confirming below, you verify that your team will be physically present at the CRC Ground Venue. Unconfirmed slots after the countdown are dynamically released to waitlisted students.
+          </p>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="block text-xs font-semibold text-slate-700">How many members are attending?</label>
+          <select name="attending_members" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-slate-900">
+            {% for i in range(team.original_team_size, 0, -1) %}
+              <option value="{{ i }}">{{ i }} Member{% if i > 1 %}s{% endif %} ({{ 'Full squad' if i == team.original_team_size else 'Partial squad — request rescue merger' }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 px-4 rounded-lg text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-xs transition active:scale-95 flex items-center justify-center gap-2">
+          <i data-lucide="check-check" class="w-4 h-4"></i>
+          Confirm Team RSVP & Lock Slot
+        </button>
+      </form>
+    {% endif %}
+
+    <!-- Pre-Event Warm-Up & Starter Pack Links -->
+    <div class="border-t border-slate-200 pt-5 space-y-3">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+        <i data-lucide="box" class="w-4 h-4 text-slate-700"></i>
+        Pre-Event Warm-Up Kit (Zero-Imposter Pack)
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+        <a href="https://github.com" target="_blank" class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 hover:bg-slate-100/80 flex items-center gap-2.5 text-slate-700 transition">
+          <i data-lucide="terminal" class="w-4 h-4 text-slate-700 shrink-0"></i>
+          <div>
+            <p class="font-semibold text-[11px] text-slate-900">Docker Starter Repo</p>
+            <p class="text-[9px] text-slate-500">FastAPI + Vite + SQLite</p>
+          </div>
+        </a>
+        <a href="#rubric" onclick="alert('Scoring Rubric:\n• Core Functionality: 40%\n• System Resilience & Schema: 25%\n• UI/UX Usability: 20%\n• Code Architecture & Pitch: 15%');" class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 hover:bg-slate-100/80 flex items-center gap-2.5 text-slate-700 transition">
+          <i data-lucide="file-text" class="w-4 h-4 text-slate-700 shrink-0"></i>
+          <div>
+            <p class="font-semibold text-[11px] text-slate-900">Evaluation Rubric</p>
+            <p class="text-[9px] text-slate-500">View exact scoring criteria</p>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-6 pt-4 border-t border-slate-100 text-center text-[10px] text-slate-400">
+      Technicals Department • Paradox'27 • IIT Madras Central Research Complex (CRC)
+    </div>
+
+  </div>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

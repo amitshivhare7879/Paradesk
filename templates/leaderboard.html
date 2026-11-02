@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Leaderboard | {{ event.name }} - Paradox'27</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 antialiased py-8 px-4 flex flex-col justify-between">
+
+    <div class="max-w-5xl mx-auto w-full space-y-6">
+
+        <!-- Top Navigation -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black tracking-wider text-lg shadow-sm">
+                    P<span class="text-emerald-400">X</span>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="font-bold text-lg text-slate-900">{{ event.name }} Leaderboard</h1>
+                        <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Live</span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">{{ event.venue_name }} &bull; Paradox '27 Official Standings</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                {% if is_admin %}
+                <span class="px-2.5 py-1 bg-purple-100 text-purple-800 border border-purple-200 rounded-lg text-xs font-bold flex items-center">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> Admin View (Unmasked)
+                </span>
+                <a href="/leaderboard/{{ event.id }}" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                    Switch to Public View
+                </a>
+                {% else %}
+                <a href="/leaderboard/{{ event.id }}?admin=1" class="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                    <i class="fa-solid fa-lock mr-1 text-slate-400"></i> Admin View
+                </a>
+                {% endif %}
+                <a href="/dashboard?event_id={{ event.id }}" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-sm transition">
+                    Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- 2-Hour Leaderboard Freeze Notice Banner -->
+        {% if is_frozen and not is_admin %}
+        <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 shadow-sm flex items-start space-x-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center text-xl shrink-0 shadow-sm">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h3 class="text-base font-bold text-amber-950">Leaderboard Frozen (2-Hour Cutoff Window)</h3>
+                    <span class="px-2 py-0.5 rounded bg-amber-200 text-amber-900 font-mono text-[10px] font-bold uppercase">Locked</span>
+                </div>
+                <p class="text-xs text-amber-800 mt-1 leading-relaxed">
+                    As per official Paradox'27 hackathon protocol, the public leaderboard is frozen 2 hours prior to final evaluations. Current rankings reflect standings at lock time; final winners will be announced live on stage!
+                </p>
+            </div>
+        </div>
+        {% elif is_frozen and is_admin %}
+        <div class="bg-purple-50 border border-purple-200 rounded-2xl p-4 text-xs text-purple-900 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-eye text-purple-600 text-sm"></i>
+                <span class="font-medium">Public view is currently <strong>FROZEN</strong>. You are seeing live backstage scores as an administrator.</span>
+            </div>
+            <form action="/admin/events/{{ event.id }}/toggle-freeze" method="POST">
+                <button type="submit" class="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold transition">
+                    Unfreeze Public View
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Top 3 Podium Cards -->
+        {% if teams|length >= 3 %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+            
+            <!-- Rank 2: Silver -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative flex flex-col justify-between order-2 md:order-1">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-black text-sm flex items-center justify-center font-mono">
+                            2
+                        </span>
+                        <span class="text-xs font-mono font-bold text-slate-400">{{ teams[1].desk_code }}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900">{{ teams[1].team_name }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ teams[1].lead_name }} &bull; {{ teams[1].member_count }} mem</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-baseline justify-between font-mono">
+                    <span class="text-xs text-slate-400 font-sans">Total Score:</span>
+                    <span class="text-xl font-black text-slate-900">
+                        {% if is_frozen and not is_admin %}
+                        <span class="text-slate-400 text-sm italic font-sans"><i class="fa-solid fa-lock text-xs mr-1 text-amber-500"></i> Frozen</span>
+                        {% else %}
+                        {{ teams[1].total_score }} <span class="text-xs text-slate-400">pts</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Rank 1: Gold -->
+            <div class="bg-white border-2 border-amber-300 rounded-2xl p-5 shadow-md relative flex flex-col justify-between order-1 md:order-2">
+                <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-amber-400 text-amber-950 font-bold text-[10px] px-3 py-0.5 rounded-full shadow-sm uppercase tracking-wider flex items-center">
+                    <i class="fa-solid fa-crown mr-1"></i> Leader
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-900 border border-amber-200 font-black text-sm flex items-center justify-center font-mono">
+                            1
+                        </span>
+                        <span class="text-xs font-mono font-bold text-slate-400">{{ teams[0].desk_code }}</span>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-900">{{ teams[0].team_name }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ teams[0].lead_name }} &bull; {{ teams[0].member_count }} mem</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-amber-100 flex items-baseline justify-between font-mono">
+                    <span class="text-xs text-slate-400 font-sans">Total Score:</span>
+                    <span class="text-2xl font-black text-amber-900">
+                        {% if is_frozen and not is_admin %}
+                        <span class="text-slate-400 text-sm italic font-sans"><i class="fa-solid fa-lock text-xs mr-1 text-amber-500"></i> Frozen</span>
+                        {% else %}
+                        {{ teams[0].total_score }} <span class="text-xs text-slate-400">pts</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Rank 3: Bronze -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm relative flex flex-col justify-between order-3">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="w-8 h-8 rounded-full bg-amber-50 text-amber-800 border border-amber-200 font-black text-sm flex items-center justify-center font-mono">
+                            3
+                        </span>
+                        <span class="text-xs font-mono font-bold text-slate-400">{{ teams[2].desk_code }}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900">{{ teams[2].team_name }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ teams[2].lead_name }} &bull; {{ teams[2].member_count }} mem</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-baseline justify-between font-mono">
+                    <span class="text-xs text-slate-400 font-sans">Total Score:</span>
+                    <span class="text-xl font-black text-slate-900">
+                        {% if is_frozen and not is_admin %}
+                        <span class="text-slate-400 text-sm italic font-sans"><i class="fa-solid fa-lock text-xs mr-1 text-amber-500"></i> Frozen</span>
+                        {% else %}
+                        {{ teams[2].total_score }} <span class="text-xs text-slate-400">pts</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+        </div>
+        {% endif %}
+
+        <!-- Full Standings Table -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-sm font-bold text-slate-900">Official Squad Standings</h3>
+                <span class="text-xs text-slate-400 font-mono">{{ teams|length }} Squads Evaluated</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200 font-mono text-[11px]">
+                        <tr>
+                            <th class="py-3 px-4 w-12 text-center">Rank</th>
+                            <th class="py-3 px-4">Squad & Lead</th>
+                            <th class="py-3 px-4">Desk</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4 text-right">Innovation (40)</th>
+                            <th class="py-3 px-4 text-right">Technical (35)</th>
+                            <th class="py-3 px-4 text-right">Presentation (25)</th>
+                            <th class="py-3 px-4 text-right font-black">Total (100)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        {% for t in teams %}
+                        <tr class="hover:bg-slate-50 transition {% if loop.index <= 3 %}font-medium{% endif %}">
+                            <td class="py-3 px-4 text-center font-mono font-bold text-slate-900">
+                                {% if loop.index == 1 %}
+                                <span class="text-amber-500"><i class="fa-solid fa-medal"></i> 1</span>
+                                {% elif loop.index == 2 %}
+                                <span class="text-slate-400"><i class="fa-solid fa-medal"></i> 2</span>
+                                {% elif loop.index == 3 %}
+                                <span class="text-amber-700"><i class="fa-solid fa-medal"></i> 3</span>
+                                {% else %}
+                                {{ loop.index }}
+                                {% endif %}
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="font-bold text-slate-900 block">{{ t.team_name }}</span>
+                                <span class="text-[11px] text-slate-400">{{ t.lead_name }} &bull; {{ t.member_count }} mem</span>
+                            </td>
+                            <td class="py-3 px-4 font-mono font-semibold text-slate-700">
+                                {{ t.desk_code or '-' }}
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase
+                                    {% if t.status == 'CHECKED_IN' %}bg-emerald-100 text-emerald-800
+                                    {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                    {{ t.status }}
+                                </span>
+                            </td>
+                            
+                            <!-- Innovation Score -->
+                            <td class="py-3 px-4 text-right font-mono">
+                                {% if is_frozen and not is_admin %}
+                                <span class="text-slate-300"><i class="fa-solid fa-lock text-[10px]"></i></span>
+                                {% else %}
+                                {{ t.score_innovation }}
+                                {% endif %}
+                            </td>
+
+                            <!-- Technical Score -->
+                            <td class="py-3 px-4 text-right font-mono">
+                                {% if is_frozen and not is_admin %}
+                                <span class="text-slate-300"><i class="fa-solid fa-lock text-[10px]"></i></span>
+                                {% else %}
+                                {{ t.score_technical }}
+                                {% endif %}
+                            </td>
+
+                            <!-- Presentation Score -->
+                            <td class="py-3 px-4 text-right font-mono">
+                                {% if is_frozen and not is_admin %}
+                                <span class="text-slate-300"><i class="fa-solid fa-lock text-[10px]"></i></span>
+                                {% else %}
+                                {{ t.score_presentation }}
+                                {% endif %}
+                            </td>
+
+                            <!-- Total Score -->
+                            <td class="py-3 px-4 text-right font-mono font-black text-slate-900 text-sm">
+                                {% if is_frozen and not is_admin %}
+                                <span class="text-amber-600 text-xs font-semibold font-sans"><i class="fa-solid fa-lock mr-1"></i> Locked</span>
+                                {% else %}
+                                {{ t.total_score }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-slate-400 pt-4">
+            <p>Paradesk Scoring & Telemetry Engine &bull; IIT Madras Paradox '27</p>
+        </div>
+
+    </div>
+
+</body>
+</html>

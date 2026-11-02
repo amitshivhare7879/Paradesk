@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Evaluator Roster — Paradox'27 Hackathon</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @media print {
+      body {
+        background-color: white !important;
+        color: black !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased selection:bg-slate-900 selection:text-white">
+
+  <!-- ================= TOP EVALUATOR BAR ================= -->
+  <header class="border-b border-slate-200 bg-white sticky top-0 z-40 no-print">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <a href="/" class="p-2 rounded-lg bg-slate-100 text-slate-700 hover:text-slate-900 hover:bg-slate-200 transition" title="Back to Ground Ops">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        </a>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold text-slate-900 tracking-tight">Evaluator Live Roster</h1>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 font-mono">
+              PARADOX'27
+            </span>
+          </div>
+          <p class="text-xs text-slate-500">IIT Madras Technical Events • Verified Ground Positions</p>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex items-center gap-2">
+        <button onclick="window.print()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs">
+          <i data-lucide="printer" class="w-3.5 h-3.5 text-slate-700"></i>
+          <span>Print / PDF</span>
+        </button>
+        <button onclick="window.location.reload()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition shadow-xs">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span>Live Refresh</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN ROSTER CONTAINER ================= -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
+    
+    <!-- Evaluator Summary Banner -->
+    <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xs">
+      <div class="space-y-1">
+        <h2 class="text-lg font-bold text-slate-900">On-Floor Hackathon Teams</h2>
+        <p class="text-xs text-slate-500">
+          Generated: <span class="font-mono text-slate-700">{{ generated_time }}</span> • Senior Core Dispatch
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3 text-xs font-mono">
+        <div class="bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-center">
+          <p class="text-slate-500 text-[10px] uppercase font-sans font-medium">Seated Teams</p>
+          <p class="text-lg font-bold text-emerald-700">{{ total_seated }}</p>
+        </div>
+        <div class="bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-center">
+          <p class="text-slate-500 text-[10px] uppercase font-sans font-medium">Active Hackers</p>
+          <p class="text-lg font-bold text-slate-900">{{ total_eval_members }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Fast Filter Search -->
+    <div class="no-print">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+        <input 
+          type="text" 
+          id="roster-search" 
+          placeholder="Filter by Desk ID (e.g. DESK-01), Team Name, Section, or Lead..." 
+          class="w-full pl-9 pr-4 py-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 transition shadow-2xs"
+          onkeyup="filterRoster()"
+        >
+      </div>
+    </div>
+
+    <!-- Clean Roster Table -->
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 bg-slate-50 text-slate-600 uppercase font-mono text-[10px] tracking-wider">
+              <th class="py-3 px-4 font-bold">Desk ID</th>
+              <th class="py-3 px-4 font-bold">Section</th>
+              <th class="py-3 px-4 font-bold">Team Name</th>
+              <th class="py-3 px-4 font-bold">Team Lead & Contact</th>
+              <th class="py-3 px-4 font-bold text-center">Members</th>
+              <th class="py-3 px-4 font-bold">Check-In Time</th>
+              <th class="py-3 px-4 font-bold">Merged Status</th>
+              <th class="py-3 px-4 font-bold text-right no-print">Judged</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100" id="roster-tbody">
+            {% if roster|length == 0 %}
+              <tr>
+                <td colspan="8" class="text-center py-12 text-slate-400">
+                  <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 text-slate-300"></i>
+                  No teams currently checked in. Check-ins will appear live here as desks are allocated.
+                </td>
+              </tr>
+            {% else %}
+              {% for row in roster %}
+                <tr class="roster-row hover:bg-slate-50/80 transition"
+                    data-search="{{ row.desk_id|lower }} {{ row.section|lower }} {{ row.team_name|lower }} {{ row.lead_name|lower }} {{ row.lead_phone }}">
+                  
+                  <!-- Desk ID -->
+                  <td class="py-3 px-4 font-mono font-bold text-slate-900">
+                    <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-mono
+                      {% if row.is_backup %}text-purple-800 border border-purple-200 bg-purple-50{% else %}text-emerald-800 border border-emerald-200 bg-emerald-50{% endif %}">
+                      {{ row.desk_id }}
+                    </span>
+                  </td>
+
+                  <!-- Section -->
+                  <td class="py-3 px-4 text-slate-700">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 border border-slate-200">
+                      {{ row.section }}
+                    </span>
+                  </td>
+
+                  <!-- Team Name -->
+                  <td class="py-3 px-4 font-bold text-slate-900 text-xs">
+                    {{ row.team_name }}
+                  </td>
+
+                  <!-- Lead & Phone -->
+                  <td class="py-3 px-4 text-slate-700">
+                    <div>
+                      <p class="font-medium text-slate-900">{{ row.lead_name }}</p>
+                      <p class="text-[11px] text-slate-500 font-mono">{{ row.lead_phone }}</p>
+                    </div>
+                  </td>
+
+                  <!-- Members Count -->
+                  <td class="py-3 px-4 text-center font-mono font-bold text-slate-800">
+                    <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                      {{ row.present_members_count }} / {{ row.original_team_size }}
+                    </span>
+                  </td>
+
+                  <!-- Check-in Time -->
+                  <td class="py-3 px-4 text-slate-600 font-mono text-[11px]">
+                    {{ row.checkin_time or 'Just now' }}
+                  </td>
+
+                  <!-- Merged Status -->
+                  <td class="py-3 px-4">
+                    {% if row.absorbed_teams %}
+                      <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                        <i data-lucide="merge" class="w-3 h-3 text-amber-700"></i>
+                        Merged (+{{ row.absorbed_teams }})
+                      </span>
+                    {% else %}
+                      <span class="text-slate-400 text-[11px] font-mono">Original Squad</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Checkoff Box for Judges -->
+                  <td class="py-3 px-4 text-right no-print">
+                    <label class="inline-flex items-center gap-1.5 cursor-pointer text-slate-500 hover:text-slate-900">
+                      <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-0">
+                      <span class="text-[10px]">Evaluated</span>
+                    </label>
+                  </td>
+
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Judge Instructions Card -->
+    <div class="p-4 rounded-xl bg-white border border-slate-200 text-xs text-slate-600 space-y-1.5 shadow-xs">
+      <div class="flex items-center gap-2 text-slate-800 font-semibold">
+        <i data-lucide="shield-check" class="w-4 h-4 text-slate-700"></i>
+        <span>Evaluation Protocol Notice</span>
+      </div>
+      <p class="text-[11px] leading-relaxed">
+        Teams marked as "Merged" represent combined squads under the Squad-Rescue initiative. Scoring rubrics apply to the combined group working on that single desk assignment. For disputes or missing teams, notify Ground Operations Desk at CRC-South.
+      </p>
+    </div>
+
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    function filterRoster() {
+      const q = document.getElementById("roster-search").value.toLowerCase().trim();
+      document.querySelectorAll(".roster-row").forEach(row => {
+        const text = row.getAttribute("data-search") || "";
+        row.style.display = text.includes(q) ? "" : "none";
+      });
+    }
+  </script>
+</body>
+</html>

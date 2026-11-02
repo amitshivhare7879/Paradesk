@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Paradesk - Paradox'27 IIT Madras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black tracking-wider text-lg shadow-sm">
+                    P<span class="text-emerald-400">X</span>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-lg text-slate-900 tracking-tight">Paradesk Core</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-900 text-white">Admin Console</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Paradox '27</span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">IIT Madras Ground Logistics & Capacity Recovery Engine</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <!-- Public Leaderboard Link -->
+                <a href="/leaderboard/{{ current_event_id }}?admin=1" target="_blank" class="inline-flex items-center px-3.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition shadow-sm">
+                    <i class="fa-solid fa-trophy mr-1.5 text-amber-500"></i> Live Leaderboard
+                </a>
+
+                <!-- Reset System -->
+                <form action="/admin/reset" method="POST" onsubmit="return confirm('Reset all data to fresh Paradox 27 seeds?');">
+                    <button type="submit" class="inline-flex items-center px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-medium text-rose-700 transition">
+                        <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset
+                    </button>
+                </form>
+
+                <div class="h-6 w-px bg-slate-200"></div>
+
+                <!-- Admin User Meta & Logout -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-900 hidden md:inline">{{ user.full_name }}</span>
+                    <a href="/logout" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-arrow-right-from-bracket mr-1.5 text-slate-400"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% if flash_success %}
+        <div class="p-3.5 mb-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                <span class="font-medium">{{ flash_success }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endif %}
+        {% if flash_warning %}
+        <div class="p-3.5 mb-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600"></i>
+                <span class="font-medium">{{ flash_warning }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-amber-600 hover:text-amber-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endif %}
+        {% if flash_error %}
+        <div class="p-3.5 mb-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-sm flex items-center justify-between shadow-sm">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-circle-xmark text-rose-600"></i>
+                <span class="font-medium">{{ flash_error }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1 space-y-6">
+
+        <!-- Multi-Event Navigation Bar -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center space-x-2 overflow-x-auto pb-1 md:pb-0">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400 mr-2 flex items-center">
+                    <i class="fa-solid fa-layer-group mr-1.5"></i> Events:
+                </span>
+                {% for ev in events %}
+                <a href="/dashboard?event_id={{ ev.id }}" 
+                   class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition flex items-center space-x-2
+                   {% if ev.id == current_event_id %}
+                       bg-slate-900 text-white shadow-sm ring-1 ring-slate-900
+                   {% else %}
+                       bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200
+                   {% endif %}">
+                    <span>{{ ev.name }}</span>
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] {% if ev.id == current_event_id %}bg-slate-800 text-slate-300{% else %}bg-slate-200 text-slate-600{% endif %}">
+                        {{ ev.venue_name }}
+                    </span>
+                </a>
+                {% endfor %}
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="document.getElementById('modal-edit-details').classList.remove('hidden')" class="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 shadow-sm transition flex items-center">
+                    <i class="fa-solid fa-pen-to-square mr-1.5 text-slate-400"></i> Edit Venue & Timing
+                </button>
+                <button onclick="document.getElementById('modal-send-comms').classList.remove('hidden')" class="px-3.5 py-2 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 shadow-sm transition flex items-center">
+                    <i class="fa-solid fa-paper-plane mr-1.5 text-purple-500"></i> Send Mails
+                </button>
+                <button onclick="document.getElementById('modal-new-event').classList.remove('hidden')" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center">
+                    <i class="fa-solid fa-plus mr-1.5 text-emerald-400"></i> New Event
+                </button>
+            </div>
+        </div>
+
+        <!-- Event Overview & Key Operations Bar -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+                <div>
+                    <div class="flex items-center space-x-3 mb-1">
+                        <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ metrics.event.name }}</h1>
+                        {% if metrics.event.is_leaderboard_frozen %}
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center">
+                            <i class="fa-solid fa-lock mr-1"></i> Leaderboard Frozen (Public)
+                        </span>
+                        {% else %}
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center">
+                            <i class="fa-solid fa-lock-open mr-1"></i> Leaderboard Live
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 font-medium">
+                        <span class="flex items-center"><i class="fa-solid fa-location-dot mr-1 text-slate-400"></i> {{ metrics.event.venue_name }}</span>
+                        <span class="flex items-center"><i class="fa-solid fa-clock mr-1 text-slate-400"></i> {{ metrics.event.event_start }}</span>
+                        <span class="flex items-center"><i class="fa-solid fa-users mr-1 text-slate-400"></i> Max {{ metrics.event.max_members_per_team }} members/team</span>
+                    </div>
+                </div>
+
+                <!-- Ground Action Buttons -->
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- G-Form CSV Ingestion -->
+                    <button onclick="document.getElementById('modal-import-csv').classList.remove('hidden')" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-file-csv mr-2 text-emerald-400"></i> Import G-Form CSV
+                    </button>
+
+                    <!-- 15-Minute No-Show Sweep Protocol -->
+                    <form action="/admin/{{ current_event_id }}/sweep-noshows" method="POST" onsubmit="return confirm('⚠️ EXECUTE 15-MINUTE PROTOCOL?\n\nThis will mark all UNVERIFIED allocated teams as NO-SHOW, reclaim their physical desks, and immediately promote Top-10 Standby teams in queue order.\n\nProceed?');">
+                        <button type="submit" class="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold shadow-sm transition flex items-center">
+                            <i class="fa-solid fa-user-xmark mr-2 text-rose-500"></i> Sweep 15-Min No-Shows
+                        </button>
+                    </form>
+
+                    <!-- Toggle Leaderboard Freeze -->
+                    <form action="/admin/events/{{ current_event_id }}/toggle-freeze" method="POST">
+                        <button type="submit" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold shadow-sm transition flex items-center">
+                            {% if metrics.event.is_leaderboard_frozen %}
+                            <i class="fa-solid fa-lock-open mr-2 text-emerald-600"></i> Unfreeze Scores
+                            {% else %}
+                            <i class="fa-solid fa-lock mr-2 text-amber-600"></i> Freeze 2-Hour Window
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Operational Capacity Gauges -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
+                <!-- Total Team Slots -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Team Capacity</p>
+                    <p class="text-2xl font-black text-slate-900 mt-1 font-mono">{{ metrics.total_slots_teams }}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">{{ metrics.total_slots_members }} Total Member Slots</p>
+                </div>
+
+                <!-- Allocated Desks -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Allocated Desks</p>
+                    <div class="flex items-baseline space-x-1.5 mt-1 font-mono">
+                        <span class="text-2xl font-black text-slate-900">{{ metrics.allocated_teams }}</span>
+                        <span class="text-xs text-slate-500 font-sans">/ {{ metrics.total_desks }} tables</span>
+                    </div>
+                    <div class="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div class="bg-slate-700 h-1.5 rounded-full" style="width: {{ metrics.utilization_pct }}%;"></div>
+                    </div>
+                </div>
+
+                <!-- Checked In Physically -->
+                <div class="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Checked-In (Arrived)</p>
+                    <p class="text-2xl font-black text-emerald-900 mt-1 font-mono">{{ metrics.checked_in_teams }}</p>
+                    <p class="text-[11px] text-emerald-700 mt-0.5">Physical Verified at Desk</p>
+                </div>
+
+                <!-- Top 10 Standby -->
+                <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-200">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Standby (Lobby)</p>
+                    <p class="text-2xl font-black text-amber-900 mt-1 font-mono">{{ metrics.standby_teams }}</p>
+                    <p class="text-[11px] text-amber-700 mt-0.5">Top-10 Queue</p>
+                </div>
+
+                <!-- Remote Waitlist -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Remote Waitlist</p>
+                    <p class="text-2xl font-black text-slate-800 mt-1 font-mono">{{ metrics.waitlisted_teams }}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Position &gt; 10</p>
+                </div>
+
+                <!-- Total Funnel -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Registered</p>
+                    <p class="text-2xl font-black text-slate-900 mt-1 font-mono">{{ metrics.total_registered }}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Total Squads</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fast Ground Check-In Bar -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 w-full md:w-auto">
+                <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-qrcode"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900">Ground Verification & Desk Allocator</h3>
+                    <p class="text-xs text-slate-500">Scan token code or enter team name to verify and confirm table allocation</p>
+                </div>
+            </div>
+
+            <form action="/admin/{{ current_event_id }}/checkin" method="POST" class="flex items-center space-x-2 w-full md:w-auto max-w-md">
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-ticket absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" name="token_or_id" required placeholder="Enter Unique Code (e.g. PX-CRC01) or Team Name" 
+                           class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono uppercase focus:outline-none focus:ring-2 focus:ring-slate-900 focus:bg-white transition">
+                </div>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center whitespace-nowrap">
+                    <i class="fa-solid fa-check mr-1.5"></i> Verify & Allocate
+                </button>
+            </form>
+        </div>
+
+        <!-- Hall Desk Matrix (Visual Physical Floorplan) -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center">
+                        <i class="fa-solid fa-cubes-stacked mr-2 text-slate-500"></i> Floorplan Desk Matrix
+                    </h2>
+                    <p class="text-xs text-slate-500">Interactive venue map showing real-time desk occupancies and seated teams</p>
+                </div>
+                <div class="flex items-center space-x-4 text-xs font-medium">
+                    <span class="flex items-center"><span class="w-3 h-3 rounded bg-emerald-500 inline-block mr-1.5"></span> Checked-In (Seated)</span>
+                    <span class="flex items-center"><span class="w-3 h-3 rounded bg-slate-700 inline-block mr-1.5"></span> Allocated (Pending Arrival)</span>
+                    <span class="flex items-center"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block mr-1.5"></span> Vacant</span>
+                </div>
+            </div>
+
+            <!-- Grid of Desks -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-10 gap-2.5 pt-2">
+                {% for d in desks %}
+                <div class="p-3 rounded-xl border text-center transition relative group
+                    {% if d.team_status == 'CHECKED_IN' %}
+                        bg-emerald-50 border-emerald-300 text-emerald-950
+                    {% elif d.is_occupied %}
+                        bg-slate-100 border-slate-300 text-slate-900
+                    {% else %}
+                        bg-white border-dashed border-slate-200 text-slate-400
+                    {% endif %}">
+                    
+                    <p class="font-mono text-xs font-bold">{{ d.desk_code }}</p>
+                    
+                    {% if d.team_name %}
+                    <p class="text-[11px] font-semibold truncate mt-1 text-slate-800" title="{{ d.team_name }}">{{ d.team_name }}</p>
+                    <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold
+                        {% if d.team_status == 'CHECKED_IN' %}bg-emerald-200 text-emerald-900{% else %}bg-slate-200 text-slate-700{% endif %}">
+                        {% if d.team_status == 'CHECKED_IN' %}SEATED{% else %}ALLOC{% endif %}
+                    </span>
+                    {% else %}
+                    <p class="text-[10px] mt-1 text-slate-400 font-medium italic">VACANT</p>
+                    {% endif %}
+
+                    <!-- Hover Popover -->
+                    {% if d.team_name %}
+                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 group-hover:opacity-100 pointer-events-none transition z-30 text-left">
+                        <p class="font-bold text-white">{{ d.team_name }}</p>
+                        <p class="text-slate-300">Lead: {{ d.lead_name }}</p>
+                        <p class="text-slate-300">Phone: {{ d.lead_phone }}</p>
+                        <p class="text-slate-400 font-mono mt-1 text-[10px]">Code: {{ d.unique_checkin_token }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Team Funnel Management & Queues -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Column 1: Allocated Teams (Desk Assigned, Awaiting Arrival) -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col h-[560px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-800"></span>
+                        <h3 class="text-sm font-bold text-slate-900">Allocated ({{ allocated_teams|length }})</h3>
+                    </div>
+                    <span class="text-[11px] font-mono text-slate-400">Desks Reserved</span>
+                </div>
+                <div class="flex-1 overflow-y-auto divide-y divide-slate-100 mt-2 pr-1">
+                    {% if allocated_teams %}
+                        {% for t in allocated_teams %}
+                        <div class="py-3 flex items-center justify-between text-xs">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-slate-900">{{ t.team_name }}</span>
+                                    <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-mono text-[10px]">{{ t.desk_code }}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-0.5">{{ t.lead_name }} &bull; {{ t.lead_phone }}</p>
+                                <span class="text-[11px] text-slate-500 font-mono">
+                                    Code: <strong>{{ t.unique_checkin_token }}</strong>
+                                </span>
+                            </div>
+                            <form action="/admin/{{ current_event_id }}/checkin" method="POST">
+                                <input type="hidden" name="token_or_id" value="{{ t.unique_checkin_token }}">
+                                <button type="submit" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-semibold transition">
+                                    Verify
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                            <i class="fa-solid fa-inbox text-3xl mb-2"></i>
+                            <p class="text-xs">All allocated teams are checked in or swept.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Column 2: Standby Top-10 Queue -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col h-[560px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900">Standby Queue ({{ standby_teams|length }})</h3>
+                    </div>
+                    <span class="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Lobby Standby</span>
+                </div>
+                <div class="flex-1 overflow-y-auto divide-y divide-slate-100 mt-2 pr-1">
+                    {% if standby_teams %}
+                        {% for t in standby_teams %}
+                        <div class="py-3 flex items-center justify-between text-xs">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-5 h-5 rounded-full bg-amber-100 text-amber-900 font-bold text-[10px] flex items-center justify-center font-mono">
+                                        #{{ loop.index }}
+                                    </span>
+                                    <span class="font-bold text-slate-900">{{ t.team_name }}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-0.5">{{ t.lead_name }} &bull; {{ t.lead_phone }}</p>
+                                <span class="text-[11px] text-amber-800 font-mono">
+                                    Code: <strong>{{ t.unique_checkin_token }}</strong>
+                                </span>
+                            </div>
+                            <form action="/admin/{{ current_event_id }}/checkin" method="POST">
+                                <input type="hidden" name="token_or_id" value="{{ t.unique_checkin_token }}">
+                                <button type="submit" title="Direct Admittance" class="px-2.5 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-[11px] font-semibold transition">
+                                    Admit & Desk
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                            <i class="fa-solid fa-users text-3xl mb-2"></i>
+                            <p class="text-xs">No teams currently on standby.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Column 3: Seated & Verified -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col h-[560px]">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <h3 class="text-sm font-bold text-slate-900">Seated & Verified ({{ checked_in_teams|length }})</h3>
+                    </div>
+                    <span class="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Physically Arrived</span>
+                </div>
+                <div class="flex-1 overflow-y-auto divide-y divide-slate-100 mt-2 pr-1">
+                    {% if checked_in_teams %}
+                        {% for t in checked_in_teams %}
+                        <div class="py-3 flex items-center justify-between text-xs">
+                            <div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="font-bold text-slate-900">{{ t.team_name }}</span>
+                                    <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-[10px] font-bold">{{ t.desk_code }}</span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-0.5">Checked In: {{ t.checkin_timestamp[11:16] if t.checkin_timestamp else 'Ready' }} &bull; {{ t.member_count }} mem</p>
+                                <p class="text-[11px] text-slate-600 font-mono">Score: <span class="font-bold text-slate-900">{{ t.total_score }} pts</span></p>
+                            </div>
+                            <button onclick="openScoringModal('{{ t.id }}', '{{ t.team_name }}', '{{ t.score_innovation }}', '{{ t.score_technical }}', '{{ t.score_presentation }}')" 
+                                    class="px-2.5 py-1 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-[11px] font-semibold text-slate-700 transition shadow-sm">
+                                <i class="fa-solid fa-star text-amber-500 mr-1"></i> Score
+                            </button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
+                            <i class="fa-solid fa-clipboard-check text-3xl mb-2"></i>
+                            <p class="text-xs">No teams verified yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Communications & Email Dispatch History -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-envelope-open-text text-purple-600"></i>
+                    <h3 class="text-sm font-bold text-slate-900">Email Dispatch & Notification History</h3>
+                </div>
+                <button onclick="document.getElementById('modal-send-comms').classList.remove('hidden')" class="text-xs text-purple-700 font-semibold hover:underline">
+                    <i class="fa-solid fa-plus mr-1"></i> Send New Notification
+                </button>
+            </div>
+
+            {% if emails_sent %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-bold border-b border-slate-200 font-mono text-[10px]">
+                        <tr>
+                            <th class="py-2.5 px-3">Sent Time</th>
+                            <th class="py-2.5 px-3">Subject</th>
+                            <th class="py-2.5 px-3">Recipient Group</th>
+                            <th class="py-2.5 px-3 text-center">Count</th>
+                            <th class="py-2.5 px-3">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-slate-700">
+                        {% for em in emails_sent %}
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-2.5 px-3 font-mono text-slate-400 text-[11px]">{{ em.sent_timestamp }}</td>
+                            <td class="py-2.5 px-3 font-semibold text-slate-900">{{ em.subject }}</td>
+                            <td class="py-2.5 px-3 font-mono text-[11px] text-slate-600">{{ em.recipient_type }}</td>
+                            <td class="py-2.5 px-3 text-center font-mono font-bold">{{ em.recipient_count }}</td>
+                            <td class="py-2.5 px-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800">
+                                    {{ em.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-xs text-slate-400">No emails dispatched yet for this competition.</p>
+            {% endif %}
+        </div>
+
+        <!-- Audit & Reclamation Stream -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-clock-rotate-left text-slate-400"></i>
+                    <h3 class="text-sm font-bold text-slate-900">Live Ground Operations & Audit Stream</h3>
+                </div>
+                <span class="text-xs text-slate-400">Real-time actions</span>
+            </div>
+            <div class="space-y-2">
+                {% for log in audit_logs %}
+                <div class="flex items-start justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-mono">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-slate-400">{{ log.timestamp }}</span>
+                        <span class="px-2 py-0.5 rounded font-bold uppercase text-[10px] 
+                            {% if log.badge_color == 'emerald' %}bg-emerald-100 text-emerald-800
+                            {% elif log.badge_color == 'rose' %}bg-rose-100 text-rose-800
+                            {% elif log.badge_color == 'purple' %}bg-purple-100 text-purple-800
+                            {% elif log.badge_color == 'blue' %}bg-slate-200 text-slate-800
+                            {% else %}bg-slate-200 text-slate-700{% endif %}">
+                            {{ log.action }}
+                        </span>
+                        <span class="text-slate-700 font-sans">{{ log.details }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal: Edit Venue, Timing & Details -->
+    <div id="modal-edit-details" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full border border-slate-200 shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900">Edit Event Venue, Timing & Configuration</h3>
+                <button onclick="document.getElementById('modal-edit-details').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form action="/admin/events/{{ current_event_id }}/edit-details" method="POST" class="mt-4 space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Event Name</label>
+                    <input type="text" name="name" value="{{ metrics.event.name }}" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Campus Venue Location</label>
+                        <input type="text" name="venue_name" value="{{ metrics.event.venue_name }}" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Event Kickoff Timing</label>
+                        <input type="text" name="event_start" value="{{ metrics.event.event_start }}" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Max Teams (Desks)</label>
+                        <input type="number" name="max_teams" value="{{ metrics.event.max_teams }}" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Max Members / Team</label>
+                        <input type="number" name="max_members_per_team" value="{{ metrics.event.max_members_per_team }}" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Problem Statement PDF URL</label>
+                    <input type="text" name="problem_statement_url" value="{{ metrics.event.problem_statement_url or '' }}" placeholder="https://..." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Problem Statement Abstract</label>
+                    <textarea name="problem_statement_text" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs">{{ metrics.event.problem_statement_text or '' }}</textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Rubric Criteria JSON</label>
+                    <textarea name="rubric_json" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono">{{ metrics.event.rubric_json or '' }}</textarea>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-edit-details').classList.add('hidden')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm">Save Event Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Dispatch Communications & Emails -->
+    <div id="modal-send-comms" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-xl p-6">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-paper-plane text-purple-600"></i>
+                    <h3 class="text-base font-bold text-slate-900">Email Dispatch & Participant Broadcast</h3>
+                </div>
+                <button onclick="document.getElementById('modal-send-comms').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form action="/admin/events/{{ current_event_id }}/send-email" method="POST" class="mt-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Campaign Type</label>
+                    <select name="campaign_type" id="campaign-select" onchange="toggleCustomEmailFields()" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold bg-slate-50 focus:bg-white focus:outline-none">
+                        <option value="BROADCAST_24H_CODES">Broadcast 24h Check-In Passes (To Allocated Desks)</option>
+                        <option value="STANDBY_LOBBY_CALL">Urgent: Standby Queue Lobby Call (To Top 10)</option>
+                        <option value="VENUE_GUIDE">Venue Directions, LAN Drops & Power Bank Guide</option>
+                        <option value="CUSTOM">Custom Email Announcement</option>
+                    </select>
+                </div>
+
+                <div id="custom-fields" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Email Subject</label>
+                        <input type="text" name="custom_subject" placeholder="Important Update..." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">Email Message Body</label>
+                        <textarea name="custom_body" rows="3" placeholder="Enter message text..." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs"></textarea>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-send-comms').classList.add('hidden')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm">Send Broadcast</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: G-Form CSV Ingestion -->
+    <div id="modal-import-csv" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-xl p-6">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center space-x-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-slate-900 text-emerald-400 flex items-center justify-center">
+                        <i class="fa-solid fa-file-csv"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900">Import Google Form CSV</h3>
+                </div>
+                <button onclick="document.getElementById('modal-import-csv').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form action="/events/{{ current_event_id }}/import-csv" method="POST" enctype="multipart/form-data" class="mt-4 space-y-4">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5 text-slate-700">
+                    <p><i class="fa-solid fa-check text-emerald-600 mr-1.5"></i> Ranks 1 to <strong>{{ metrics.event.max_teams }}</strong> &rarr; <span class="font-semibold text-slate-900">ALLOCATED</span> + Desk</p>
+                    <p><i class="fa-solid fa-check text-amber-600 mr-1.5"></i> Ranks {{ metrics.event.max_teams + 1 }} to <strong>{{ metrics.event.max_teams + 10 }}</strong> &rarr; <span class="font-semibold text-amber-800">STANDBY_TOP10</span></p>
+                    <p><i class="fa-solid fa-check text-slate-400 mr-1.5"></i> Ranks &gt; {{ metrics.event.max_teams + 10 }} &rarr; <span class="font-semibold text-slate-600">WAITLISTED</span></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Select CSV File</label>
+                    <input type="file" name="file" accept=".csv" required class="block w-full text-xs text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-900 file:text-white hover:file:bg-slate-800 cursor-pointer border border-slate-200 rounded-xl p-2 bg-slate-50">
+                </div>
+
+                <div class="flex items-center justify-between pt-2">
+                    <a href="/events/{{ current_event_id }}/sample-csv" class="text-xs text-slate-600 hover:text-slate-900 font-medium underline flex items-center">
+                        <i class="fa-solid fa-download mr-1"></i> Download Sample CSV
+                    </a>
+                    <div class="flex space-x-2">
+                        <button type="button" onclick="document.getElementById('modal-import-csv').classList.add('hidden')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm">Process FCFS</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Provision New Event -->
+    <div id="modal-new-event" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full border border-slate-200 shadow-xl p-6">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900">Provision New Event</h3>
+                <button onclick="document.getElementById('modal-new-event').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form action="/admin/events" method="POST" class="mt-4 space-y-3.5">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Event Name</label>
+                    <input type="text" name="name" required placeholder="e.g. WebOps HackSprint" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">URL Slug</label>
+                    <input type="text" name="slug" required placeholder="e.g. webops-hacksprint-27" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-slate-900 focus:outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Max Teams (Desks)</label>
+                        <input type="number" name="max_teams" value="30" min="1" max="200" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-slate-900 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Max Mem/Team</label>
+                        <input type="number" name="max_members_per_team" value="4" min="1" max="10" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-slate-900 focus:outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Venue Hall</label>
+                    <input type="text" name="venue_name" value="CRC Hall 102" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Event Start Time</label>
+                    <input type="text" name="event_start" value="2027-01-20 09:00:00" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-slate-900 focus:outline-none">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-new-event').classList.add('hidden')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm">Create Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Judge Scoring -->
+    <div id="modal-score-team" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-xl p-6">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-star text-amber-500"></i>
+                    <h3 class="text-base font-bold text-slate-900">Judge Evaluation</h3>
+                </div>
+                <button onclick="document.getElementById('modal-score-team').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form action="/admin/{{ current_event_id }}/score" method="POST" class="mt-4 space-y-3.5">
+                <input type="hidden" name="team_id" id="score-team-id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Evaluating Team</label>
+                    <input type="text" id="score-team-name" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Innovation & Originality (Max 40)</label>
+                    <input type="number" step="0.5" min="0" max="40" name="score_innovation" id="score-in" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-slate-900">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Technical Complexity & Architecture (Max 35)</label>
+                    <input type="number" step="0.5" min="0" max="35" name="score_technical" id="score-tech" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-slate-900">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">UI/UX & Final Presentation (Max 25)</label>
+                    <input type="number" step="0.5" min="0" max="25" name="score_presentation" id="score-pres" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-slate-900">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="document.getElementById('modal-score-team').classList.add('hidden')" class="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-sm">Save Score</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openScoringModal(teamId, teamName, scIn, scTech, scPres) {
+            document.getElementById('score-team-id').value = teamId;
+            document.getElementById('score-team-name').value = teamName;
+            document.getElementById('score-in').value = scIn || 0;
+            document.getElementById('score-tech').value = scTech || 0;
+            document.getElementById('score-pres').value = scPres || 0;
+            document.getElementById('modal-score-team').classList.remove('hidden');
+        }
+
+        function toggleCustomEmailFields() {
+            var sel = document.getElementById('campaign-select').value;
+            var customDiv = document.getElementById('custom-fields');
+            if (sel === 'CUSTOM') {
+                customDiv.classList.remove('hidden');
+            } else {
+                customDiv.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

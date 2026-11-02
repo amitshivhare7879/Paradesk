@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paradesk — Ground Operations & Capacity Recovery | Paradox'27</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Clean subtle scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f8fafc;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col font-sans antialiased selection:bg-slate-900 selection:text-white">
+
+  <!-- ================= TOP HEADER BAR ================= -->
+  <header class="border-b border-slate-200 bg-white sticky top-0 z-40">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Title & Branding -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-xs">
+          <i data-lucide="layout-grid" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold tracking-tight text-slate-900 flex items-center gap-2">
+              Paradesk
+              <span class="text-[11px] font-mono font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                v2.7-LIVE
+              </span>
+            </h1>
+          </div>
+          <div class="flex items-center gap-2 mt-0.5">
+            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Paradox'27 Technical Events Operations
+            </span>
+            <span class="text-xs text-slate-500 hidden sm:inline">• Venue: CRC Halls (North & South)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center flex-wrap gap-2">
+        <!-- New Walk-in Team Button -->
+        <button onclick="openWalkinModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs">
+          <i data-lucide="user-plus" class="w-3.5 h-3.5 text-slate-700"></i>
+          <span>Add Walk-in</span>
+        </button>
+
+        <!-- Automated Email & Reminder Center -->
+        <a href="/comms" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs">
+          <i data-lucide="mail" class="w-3.5 h-3.5 text-slate-700"></i>
+          <span>Email & Reminders</span>
+        </a>
+
+        <!-- Export CSV Button -->
+        <a href="/export-csv" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs" title="Download Full Roster CSV">
+          <i data-lucide="download" class="w-3.5 h-3.5 text-slate-700"></i>
+          <span>Export CSV</span>
+        </a>
+
+        <!-- Evaluator Roster -->
+        <a href="/judges-roster" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition shadow-xs">
+          <i data-lucide="clipboard-list" class="w-3.5 h-3.5 text-slate-700"></i>
+          <span>Evaluator Roster</span>
+          <i data-lucide="external-link" class="w-3 h-3 text-slate-400"></i>
+        </a>
+
+        <!-- 15-Minute No-Show Sweeper Trigger -->
+        <form action="/sweep-noshows" method="POST" onsubmit="return confirm('⚠️ ACTIVATE 15-MIN NO-SHOW PROTOCOL?\n\nThis will mark all non-reported Registered/RSVP teams as NO-SHOW and liberate their table allocations to the Lobby Standby queue.\n\nProceed?');">
+          <button type="submit" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition active:scale-95 shadow-xs">
+            <i data-lucide="zap" class="w-3.5 h-3.5 text-rose-600"></i>
+            <span>Sweep No-Shows (15-Min Cutoff)</span>
+          </button>
+        </form>
+
+        <!-- Reset DB Action -->
+        <form action="/reset-db" method="POST" onsubmit="return confirm('Reset database back to Paradox\'27 initial seeds?');">
+          <button type="submit" title="Reset Demo Data" class="p-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ================= NOTIFICATIONS / FLASH BANNER ================= -->
+  <div id="flash-banner" class="max-w-[1720px] mx-auto px-4 sm:px-6 pt-3 w-full"></div>
+
+  <!-- ================= TELEMETRY STRIP (5 METRIC CARDS) ================= -->
+  <section class="max-w-[1720px] mx-auto px-4 sm:px-6 pt-4 pb-1 w-full">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      
+      <!-- Card 1: Total Registered -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-xs">
+        <div>
+          <p class="text-[11px] font-semibold tracking-wider uppercase text-slate-500">Total Registered</p>
+          <div class="flex items-baseline gap-1.5 mt-1">
+            <span class="text-2xl font-bold text-slate-900">{{ metrics.total_registered }}</span>
+            <span class="text-xs text-slate-500">teams</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-0.5">Portal registrations</p>
+        </div>
+        <div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+          <i data-lucide="users" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- Card 2: Confirmed 48h RSVPs -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-xs">
+        <div>
+          <p class="text-[11px] font-semibold tracking-wider uppercase text-slate-500">Confirmed RSVPs</p>
+          <div class="flex items-baseline gap-1.5 mt-1">
+            <span class="text-2xl font-bold text-emerald-600">{{ metrics.confirmed_rsvps }}</span>
+            <span class="text-xs text-slate-500">pending entry</span>
+          </div>
+          <p class="text-[11px] text-emerald-600 mt-0.5 font-medium">Verified 48h token</p>
+        </div>
+        <div class="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+          <i data-lucide="badge-check" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- Card 3: Active Seated Teams -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-xs">
+        <div>
+          <p class="text-[11px] font-semibold tracking-wider uppercase text-slate-500">Active Seated Teams</p>
+          <div class="flex items-baseline gap-1.5 mt-1">
+            <span class="text-2xl font-bold text-slate-900">{{ metrics.active_seated_teams }}</span>
+            <span class="text-xs text-slate-500">in venue</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-0.5">Connected to LAN</p>
+        </div>
+        <div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+          <i data-lucide="laptop" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- Card 4: Desk Utilization % -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-xs">
+        <div>
+          <p class="text-[11px] font-semibold tracking-wider uppercase text-slate-500">Desk Utilization</p>
+          <div class="flex items-baseline gap-1.5 mt-1">
+            <span class="text-2xl font-bold text-slate-900">
+              {{ metrics.desk_utilization_pct }}%
+            </span>
+            <span class="text-xs text-slate-500">{{ metrics.occupied_desks }}/{{ metrics.total_desks }}</span>
+          </div>
+          <div class="w-24 bg-slate-100 rounded-full h-1.5 mt-1.5 overflow-hidden border border-slate-200">
+            <div class="bg-slate-900 h-1.5 rounded-full" style="width: {{ metrics.desk_utilization_pct }}%"></div>
+          </div>
+        </div>
+        <div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700">
+          <i data-lucide="activity" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- Card 5: Reclaimed No-Show Desks -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-xs col-span-2 sm:col-span-1">
+        <div>
+          <p class="text-[11px] font-semibold tracking-wider uppercase text-slate-500">Reclaimed Capacity</p>
+          <div class="flex items-baseline gap-1.5 mt-1">
+            <span class="text-2xl font-bold text-rose-600">{{ metrics.reclaimed_desks }}</span>
+            <span class="text-xs text-slate-500">freed</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-0.5">Saved from frozen tables</p>
+        </div>
+        <div class="w-9 h-9 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600">
+          <i data-lucide="recycle" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= MAIN THREE-COLUMN OPERATIONAL WORKSPACE ================= -->
+  <main class="max-w-[1720px] mx-auto px-4 sm:px-6 py-4 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-5">
+    
+    <!-- ================= COLUMN 1: ARRIVAL & WAITLIST QUEUE (4 COLS) ================= -->
+    <div class="lg:col-span-4 flex flex-col gap-3.5">
+      
+      <!-- Section Header -->
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4 text-slate-700"></i>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Ground Influx & Queues</h2>
+        </div>
+        <span class="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+          {{ pending_arrivals|length }} Pending • {{ lobby_standby|length }} Lobby
+        </span>
+      </div>
+
+      <!-- Fast Search & Filter -->
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+        <input 
+          type="text" 
+          id="queue-search" 
+          placeholder="Search team name, lead, phone, or token..." 
+          class="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-slate-900 transition shadow-2xs"
+          onkeyup="filterQueueCards()"
+        >
+      </div>
+
+      <!-- Tab Navigator -->
+      <div class="flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200 text-xs">
+        <button onclick="switchQueueTab('tab-arrivals')" id="btn-tab-arrivals" class="flex-1 py-1.5 rounded-md font-medium text-center bg-white text-slate-900 shadow-xs border border-slate-200 transition">
+          Arrivals ({{ pending_arrivals|length }})
+        </button>
+        <button onclick="switchQueueTab('tab-lobby')" id="btn-tab-lobby" class="flex-1 py-1.5 rounded-md font-medium text-center text-slate-600 hover:text-slate-900 transition">
+          Lobby ({{ lobby_standby|length }})
+        </button>
+        <button onclick="switchQueueTab('tab-hostel')" id="btn-tab-hostel" class="flex-1 py-1.5 rounded-md font-medium text-center text-slate-600 hover:text-slate-900 transition">
+          Hostel ({{ hostel_broadcast|length }})
+        </button>
+        <button onclick="switchQueueTab('tab-noshows')" id="btn-tab-noshows" class="py-1.5 px-2 rounded-md font-medium text-center text-slate-600 hover:text-slate-900 transition">
+          No-Shows ({{ no_shows|length }})
+        </button>
+      </div>
+
+      <!-- Tab 1: Pending Arrivals -->
+      <div id="tab-arrivals" class="queue-tab-content flex flex-col gap-2.5 max-h-[660px] overflow-y-auto pr-1">
+        {% if pending_arrivals|length == 0 %}
+          <div class="p-8 text-center rounded-xl bg-white border border-dashed border-slate-300 text-slate-500 text-xs">
+            <i data-lucide="check-circle" class="w-7 h-7 mx-auto text-emerald-500 mb-2"></i>
+            No pending arrivals! All registered teams are either seated or marked no-show.
+          </div>
+        {% else %}
+          {% for team in pending_arrivals %}
+            <div class="team-card bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-3.5 flex flex-col gap-2.5 transition shadow-xs group"
+                 data-search="{{ team.team_name|lower }} {{ team.lead_name|lower }} {{ team.lead_phone }} {{ team.rsvp_token|lower }}">
+              
+              <!-- Card Header -->
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-bold text-slate-900">{{ team.team_name }}</h3>
+                    {% if team.status == 'CONFIRMED_RSVP' %}
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        RSVP CONFIRMED
+                      </span>
+                    {% else %}
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        REGISTERED
+                      </span>
+                    {% endif %}
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    <span class="text-slate-700 font-medium">{{ team.lead_name }}</span>
+                    <span>•</span>
+                    <span>{{ team.lead_phone }}</span>
+                  </p>
+                </div>
+                <span class="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                  {{ team.rsvp_token }}
+                </span>
+              </div>
+
+              <!-- Quick Check-in Control Form -->
+              <form action="/checkin/{{ team.id }}" method="POST" class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-xs text-slate-600">
+                  <label class="text-[11px] text-slate-500">Present:</label>
+                  <select name="present_members_count" class="bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-900 focus:outline-none focus:border-slate-900">
+                    {% for count in range(1, 5) %}
+                      <option value="{{ count }}" {% if count == team.original_team_size %}selected{% endif %}>
+                        {{ count }} of {{ team.original_team_size }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                  {% if avail_standard == 0 and avail_backup > 0 %}
+                    <label class="text-[10px] text-purple-700 flex items-center gap-1 cursor-pointer font-medium">
+                      <input type="checkbox" name="use_backup" value="true" class="rounded border-slate-300 text-purple-600">
+                      Reserve
+                    </label>
+                  {% endif %}
+                  <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white flex items-center gap-1 transition shadow-xs active:scale-95">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    Check-In Desk
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <!-- Tab 2: Lobby Standby (Priority 1) -->
+      <div id="tab-lobby" class="queue-tab-content flex-col gap-2.5 max-h-[660px] overflow-y-auto pr-1 hidden">
+        <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="font-semibold">Priority 1: Physically in Venue Lobby</span>
+          </div>
+          <span class="text-[11px] text-emerald-700">Immediate fill</span>
+        </div>
+
+        {% if lobby_standby|length == 0 %}
+          <div class="p-8 text-center rounded-xl bg-white border border-dashed border-slate-300 text-slate-500 text-xs">
+            No standby candidates currently waiting in lobby.
+          </div>
+        {% else %}
+          {% for team in lobby_standby %}
+            <div class="team-card bg-white border border-emerald-200 hover:border-emerald-300 rounded-xl p-3.5 flex flex-col gap-2.5 transition shadow-xs"
+                 data-search="{{ team.team_name|lower }} {{ team.lead_name|lower }} {{ team.lead_phone }} {{ team.rsvp_token|lower }}">
+              
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-bold text-slate-900">{{ team.team_name }}</h3>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      LOBBY STANDBY
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    <span class="text-slate-700 font-medium">{{ team.lead_name }}</span> • {{ team.lead_phone }}
+                  </p>
+                </div>
+                <span class="text-[11px] text-slate-600 font-medium bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                  {{ team.original_team_size }} members ready
+                </span>
+              </div>
+
+              <!-- Quick Standby Admittance -->
+              <form action="/admit-standby/{{ team.id }}" method="POST" class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-xs text-slate-600">
+                  <label class="text-[11px] text-slate-500">Count:</label>
+                  <input type="number" name="present_members_count" min="1" max="4" value="{{ team.original_team_size }}" class="w-12 bg-white border border-slate-300 rounded px-1.5 py-1 text-xs text-slate-900">
+                </div>
+                <div class="flex items-center gap-2">
+                  {% if avail_standard == 0 and avail_backup > 0 %}
+                    <label class="text-[10px] text-purple-700 flex items-center gap-1 cursor-pointer font-medium">
+                      <input type="checkbox" name="use_backup" value="true" class="rounded border-slate-300 text-purple-600">
+                      Reserve
+                    </label>
+                  {% endif %}
+                  <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1 transition shadow-xs active:scale-95">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                    Admit to Reclaimed Desk
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <!-- Tab 3: Hostel Broadcast (Priority 2) -->
+      <div id="tab-hostel" class="queue-tab-content flex-col gap-2.5 max-h-[660px] overflow-y-auto pr-1 hidden">
+        <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="radio" class="w-3.5 h-3.5 text-amber-600"></i>
+            <span class="font-semibold">Priority 2: Campus Hostels (10-min transit)</span>
+          </div>
+          <span class="text-[11px] text-amber-700">Secondary pool</span>
+        </div>
+
+        {% if hostel_broadcast|length == 0 %}
+          <div class="p-8 text-center rounded-xl bg-white border border-dashed border-slate-300 text-slate-500 text-xs">
+            No remote hostel standby teams in queue.
+          </div>
+        {% else %}
+          {% for team in hostel_broadcast %}
+            <div class="team-card bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-3.5 flex flex-col gap-2.5 transition shadow-xs"
+                 data-search="{{ team.team_name|lower }} {{ team.lead_name|lower }} {{ team.lead_phone }} {{ team.rsvp_token|lower }}">
+              
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-bold text-slate-900">{{ team.team_name }}</h3>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                      HOSTEL BROADCAST
+                    </span>
+                  </div>
+                  <p class="text-xs text-slate-500 mt-0.5">
+                    <span class="text-slate-700 font-medium">{{ team.lead_name }}</span> • {{ team.lead_phone }}
+                  </p>
+                </div>
+                <span class="text-[11px] text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                  {{ team.original_team_size }} members
+                </span>
+              </div>
+
+              <!-- Quick Admittance with Priority Verification -->
+              <form action="/admit-standby/{{ team.id }}" method="POST" class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <input type="hidden" name="present_members_count" value="{{ team.original_team_size }}">
+                <span class="text-[10px] text-slate-500">Requires empty lobby queue</span>
+                <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-1 transition active:scale-95 shadow-xs">
+                  <i data-lucide="bell-ring" class="w-3.5 h-3.5"></i>
+                  Call & Admit to Desk
+                </button>
+              </form>
+
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <!-- Tab 4: No-Shows -->
+      <div id="tab-noshows" class="queue-tab-content flex-col gap-2 max-h-[660px] overflow-y-auto pr-1 hidden">
+        {% if no_shows|length == 0 %}
+          <div class="p-8 text-center rounded-xl bg-white border border-dashed border-slate-300 text-slate-500 text-xs">
+            Zero no-show flags triggered so far.
+          </div>
+        {% else %}
+          {% for team in no_shows %}
+            <div class="bg-white border border-rose-200 rounded-lg p-3 flex items-center justify-between gap-3 text-xs shadow-xs">
+              <div>
+                <p class="font-bold text-rose-700 line-through">{{ team.team_name }}</p>
+                <p class="text-[11px] text-slate-500">{{ team.lead_name }} • {{ team.lead_phone }}</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 font-mono">
+                NO_SHOW (RECLAIMED)
+              </span>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- ================= COLUMN 2: ACTIVE HALL GRID (5 COLS) ================= -->
+    <div class="lg:col-span-5 flex flex-col gap-3.5">
+      
+      <!-- Section Header & Venue Filter -->
+      <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="map-pin" class="w-4 h-4 text-slate-700"></i>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Ground Hall Grid</h2>
+        </div>
+        <div class="flex items-center gap-1.5 text-xs">
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-medium">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            {{ metrics.occupied_desks }} Occupied
+          </span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[11px]">
+            {{ avail_standard }} Standard Open
+          </span>
+          <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 text-[11px]">
+            {{ avail_backup }} Reserve Open
+          </span>
+        </div>
+      </div>
+
+      <!-- Hall Visual Grid Container -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-5 max-h-[820px] overflow-y-auto shadow-xs">
+        
+        <!-- SECTION 1: CRC-NORTH (DESK-01 to DESK-18) -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="text-xs font-bold text-slate-800 tracking-wide flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-800"></span>
+              CRC-North Hall (Desks 01–18)
+            </span>
+            <span class="text-[10px] text-slate-500 font-mono">1Gbps Switch 1A • Phase 1 Power</span>
+          </div>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {% for desk in desks if desk.section == 'CRC-North' %}
+              <div onclick="showDeskModal('{{ desk.desk_id }}', '{{ desk.section }}', '{{ desk.is_occupied }}', '{{ desk.is_backup }}', '{{ desk.team_name or '' }}', '{{ desk.lead_name or '' }}', '{{ desk.lead_phone or '' }}', '{{ desk.present_members_count or 0 }}', '{{ desk.checkin_time or '' }}')"
+                   class="cursor-pointer rounded-lg p-2 flex flex-col justify-between h-20 transition border relative group
+                   {% if desk.is_occupied %}
+                     bg-emerald-50/70 border-emerald-300 hover:border-emerald-400
+                   {% else %}
+                     bg-white border-slate-200 hover:border-slate-400 hover:bg-slate-50
+                   {% endif %}">
+                
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-xs font-bold {% if desk.is_occupied %}text-emerald-800{% else %}text-slate-600{% endif %}">
+                    {{ desk.desk_id }}
+                  </span>
+                  {% if desk.is_occupied %}
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  {% else %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                  {% endif %}
+                </div>
+
+                <div class="mt-1">
+                  {% if desk.is_occupied %}
+                    <p class="text-[11px] font-bold text-slate-900 truncate" title="{{ desk.team_name }}">{{ desk.team_name }}</p>
+                    <p class="text-[9px] text-emerald-700 font-medium font-mono">{{ desk.present_members_count }} members</p>
+                  {% else %}
+                    <p class="text-[10px] text-slate-400 font-medium">VACANT</p>
+                    <p class="text-[9px] text-slate-400 font-mono">Ready</p>
+                  {% endif %}
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- SECTION 2: CRC-SOUTH (DESK-19 to DESK-35) -->
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="text-xs font-bold text-slate-800 tracking-wide flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-slate-800"></span>
+              CRC-South Hall (Desks 19–35)
+            </span>
+            <span class="text-[10px] text-slate-500 font-mono">1Gbps Switch 1B • Phase 2 Power</span>
+          </div>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {% for desk in desks if desk.section == 'CRC-South' %}
+              <div onclick="showDeskModal('{{ desk.desk_id }}', '{{ desk.section }}', '{{ desk.is_occupied }}', '{{ desk.is_backup }}', '{{ desk.team_name or '' }}', '{{ desk.lead_name or '' }}', '{{ desk.lead_phone or '' }}', '{{ desk.present_members_count or 0 }}', '{{ desk.checkin_time or '' }}')"
+                   class="cursor-pointer rounded-lg p-2 flex flex-col justify-between h-20 transition border relative group
+                   {% if desk.is_occupied %}
+                     bg-emerald-50/70 border-emerald-300 hover:border-emerald-400
+                   {% else %}
+                     bg-white border-slate-200 hover:border-slate-400 hover:bg-slate-50
+                   {% endif %}">
+                
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-xs font-bold {% if desk.is_occupied %}text-emerald-800{% else %}text-slate-600{% endif %}">
+                    {{ desk.desk_id }}
+                  </span>
+                  {% if desk.is_occupied %}
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  {% else %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                  {% endif %}
+                </div>
+
+                <div class="mt-1">
+                  {% if desk.is_occupied %}
+                    <p class="text-[11px] font-bold text-slate-900 truncate" title="{{ desk.team_name }}">{{ desk.team_name }}</p>
+                    <p class="text-[9px] text-emerald-700 font-medium font-mono">{{ desk.present_members_count }} members</p>
+                  {% else %}
+                    <p class="text-[10px] text-slate-400 font-medium">VACANT</p>
+                    <p class="text-[9px] text-slate-400 font-mono">Ready</p>
+                  {% endif %}
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- SECTION 3: EMERGENCY RESERVE / CONTROL DESKS (DESK-B01 to DESK-B05) -->
+        <div class="pt-3 border-t border-slate-200">
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="text-xs font-bold text-purple-900 tracking-wide flex items-center gap-1.5">
+              <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-purple-700"></i>
+              Emergency Control & Overflow Reserve Desks
+            </span>
+            <span class="text-[10px] text-purple-700 font-mono bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+              Reserved for Full-Capacity Overflow
+            </span>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {% for desk in desks if desk.is_backup %}
+              <div onclick="showDeskModal('{{ desk.desk_id }}', '{{ desk.section }}', '{{ desk.is_occupied }}', '{{ desk.is_backup }}', '{{ desk.team_name or '' }}', '{{ desk.lead_name or '' }}', '{{ desk.lead_phone or '' }}', '{{ desk.present_members_count or 0 }}', '{{ desk.checkin_time or '' }}')"
+                   class="cursor-pointer rounded-lg p-2.5 flex flex-col justify-between h-20 transition border relative group
+                   {% if desk.is_occupied %}
+                     bg-purple-50 border-purple-300 hover:border-purple-400
+                   {% else %}
+                     bg-white border-purple-200 hover:border-purple-300 hover:bg-purple-50/30
+                   {% endif %}">
+                
+                <div class="flex items-center justify-between">
+                  <span class="font-mono text-xs font-bold text-purple-800">
+                    {{ desk.desk_id }}
+                  </span>
+                  {% if desk.is_occupied %}
+                    <span class="w-2 h-2 rounded-full bg-purple-600"></span>
+                  {% else %}
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-300"></span>
+                  {% endif %}
+                </div>
+
+                <div class="mt-1">
+                  {% if desk.is_occupied %}
+                    <p class="text-[11px] font-bold text-slate-900 truncate" title="{{ desk.team_name }}">{{ desk.team_name }}</p>
+                    <p class="text-[9px] text-purple-700 font-medium font-mono">{{ desk.present_members_count }} members</p>
+                  {% else %}
+                    <p class="text-[10px] text-purple-600 font-medium">RESERVE</p>
+                    <p class="text-[9px] text-slate-400 font-mono">Standby</p>
+                  {% endif %}
+                </div>
+
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================= COLUMN 3: SQUAD-RESCUE & AUDIT INCIDENT DESK (3 COLS) ================= -->
+    <div class="lg:col-span-3 flex flex-col gap-4">
+      
+      <!-- SQUAD-RESCUE ENGINE WIDGET -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
+        <div class="flex items-center gap-2 border-b border-slate-100 pb-2.5 mb-3">
+          <div class="w-6 h-6 rounded bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+            <i data-lucide="merge" class="w-3.5 h-3.5"></i>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Squad-Rescue Merger</h2>
+            <p class="text-[10px] text-slate-500">Combine fragmented teams into 1 table</p>
+          </div>
+        </div>
+
+        <form action="/merge-squads" method="POST" class="flex flex-col gap-3">
+          <!-- Primary Team (Retains Desk) -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+              Primary Host Team (Retains Desk):
+            </label>
+            <select name="primary_team_id" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-900">
+              <option value="">Select Anchor Team...</option>
+              {% for team in all_mergeable_teams %}
+                <option value="{{ team.id }}">
+                  {{ team.team_name }} ({{ team.desk_id or 'No Desk' }}, {{ team.present_members_count or team.original_team_size }}p)
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Secondary Incomplete Team -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-700 mb-1">
+              Secondary Squad to Merge In:
+            </label>
+            <select name="secondary_team_id" required class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-slate-900">
+              <option value="">Select Incomplete Squad...</option>
+              {% for team in all_mergeable_teams %}
+                <option value="{{ team.id }}">
+                  {{ team.team_name }} ({{ team.desk_id or 'No Desk' }}, {{ team.present_members_count or team.original_team_size }}p)
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-start gap-1.5">
+            <i data-lucide="info" class="w-3.5 h-3.5 text-amber-700 mt-0.5 shrink-0"></i>
+            <span>Secondary squad desk will be <strong>instantly reclaimed</strong> and returned to standby queue.</span>
+          </div>
+
+          <button type="submit" class="w-full py-2 px-3 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white shadow-xs tracking-wide transition active:scale-95 flex items-center justify-center gap-1.5">
+            <i data-lucide="users-round" class="w-3.5 h-3.5"></i>
+            Merge Squads into Single Desk
+          </button>
+        </form>
+      </div>
+
+      <!-- INCIDENT & AUDIT TIMELINE -->
+      <div class="bg-white border border-slate-200 rounded-xl p-4 flex-1 flex flex-col min-h-[360px] shadow-xs">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="history" class="w-4 h-4 text-slate-700"></i>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-800">Ground Operations Feed</h2>
+          </div>
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto max-h-[380px] flex flex-col gap-2.5 pr-1 text-xs">
+          {% if audit_logs|length == 0 %}
+            <p class="text-slate-400 text-center py-6">No ops logged yet.</p>
+          {% else %}
+            {% for log in audit_logs %}
+              <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col gap-1">
+                <div class="flex items-center justify-between text-[10px]">
+                  <span class="font-mono text-slate-500">{{ log.timestamp }}</span>
+                  <span class="px-1.5 py-0.2 rounded font-semibold font-mono text-[9px] uppercase
+                    {% if log.badge_color == 'emerald' %}
+                      bg-emerald-50 text-emerald-700 border border-emerald-200
+                    {% elif log.badge_color == 'amber' %}
+                      bg-amber-50 text-amber-800 border border-amber-200
+                    {% elif log.badge_color == 'rose' %}
+                      bg-rose-50 text-rose-700 border border-rose-200
+                    {% elif log.badge_color == 'purple' %}
+                      bg-purple-50 text-purple-700 border border-purple-200
+                    {% else %}
+                      bg-slate-100 text-slate-700 border border-slate-300
+                    {% endif %}">
+                    {{ log.action }}
+                  </span>
+                </div>
+                <p class="text-slate-700 text-[11px] leading-tight">{{ log.details }}</p>
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= MODAL: DESK INSPECTOR ================= -->
+  <div id="desk-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-xl relative">
+      <button onclick="closeDeskModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div id="modal-desk-icon" class="w-11 h-11 rounded-xl flex items-center justify-center text-base font-bold font-mono"></div>
+        <div>
+          <h3 id="modal-desk-id" class="text-base font-bold text-slate-900"></h3>
+          <p id="modal-desk-section" class="text-xs text-slate-500"></p>
+        </div>
+      </div>
+
+      <div id="modal-desk-body" class="space-y-2.5 text-xs border-y border-slate-100 py-4 my-4">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button onclick="closeDeskModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: ADD WALKIN ================= -->
+  <div id="walkin-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-xl relative">
+      <button onclick="closeWalkinModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Register Campus Walk-in</h3>
+          <p class="text-xs text-slate-500">On-the-spot team registration for Paradox'27</p>
+        </div>
+      </div>
+
+      <form action="/walkin-register" method="POST" class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-700 font-semibold mb-1">Team Name</label>
+          <input type="text" name="team_name" required placeholder="e.g. Algosaur IITM" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Team Lead Name</label>
+            <input type="text" name="lead_name" required placeholder="Aarav..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Phone Number</label>
+            <input type="text" name="lead_phone" required placeholder="+91 98..." class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Email</label>
+            <input type="email" name="lead_email" required placeholder="lead@smail.iitm.ac.in" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900">
+          </div>
+          <div>
+            <label class="block text-slate-700 font-semibold mb-1">Team Size</label>
+            <select name="team_size" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900">
+              <option value="4">4 Members (Standard)</option>
+              <option value="3">3 Members</option>
+              <option value="2">2 Members</option>
+              <option value="1">1 Member (Solo)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-slate-700 font-semibold mb-1">Queue Placement</label>
+          <select name="waitlist_tier" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-slate-900 focus:outline-none focus:border-slate-900">
+            <option value="LOBBY_STANDBY">LOBBY_STANDBY (Present at Venue Desk)</option>
+            <option value="HOSTEL_BROADCAST">HOSTEL_BROADCAST (Remote in Campus)</option>
+          </select>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeWalkinModal()" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-2 rounded-lg text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition active:scale-95 shadow-xs">
+            Save & Add to Queue
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= SCRIPTS ================= -->
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Check URL params for Toast Flash notifications
+    (function handleUrlFlash() {
+      const params = new URLSearchParams(window.location.search);
+      const banner = document.getElementById("flash-banner");
+
+      if (params.has("success")) {
+        banner.innerHTML = `
+          <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center gap-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+              <span>${params.get("success")}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-700 hover:text-emerald-900"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+          </div>`;
+      } else if (params.has("warning")) {
+        banner.innerHTML = `
+          <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center gap-2">
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600"></i>
+              <span>${params.get("warning")}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-amber-700 hover:text-amber-900"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+          </div>`;
+      } else if (params.has("error")) {
+        banner.innerHTML = `
+          <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between gap-3 shadow-xs">
+            <div class="flex items-center gap-2">
+              <i data-lucide="alert-octagon" class="w-4 h-4 text-rose-600"></i>
+              <span>${params.get("error")}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-rose-700 hover:text-rose-900"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+          </div>`;
+      }
+      lucide.createIcons();
+
+      // Clean query string from URL without reload
+      if (window.history.replaceState && (params.has("success") || params.has("warning") || params.has("error"))) {
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    })();
+
+    // Queue Tab Switching
+    function switchQueueTab(tabId) {
+      document.querySelectorAll('.queue-tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('[id^="btn-tab-"]').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-slate-900', 'shadow-xs', 'border', 'border-slate-200');
+        btn.classList.add('text-slate-600');
+      });
+
+      const activeTab = document.getElementById(tabId);
+      if (activeTab) activeTab.classList.remove('hidden');
+
+      const activeBtn = document.getElementById('btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-600');
+        activeBtn.classList.add('bg-white', 'text-slate-900', 'shadow-xs', 'border', 'border-slate-200');
+      }
+    }
+
+    // Queue Card Filtering
+    function filterQueueCards() {
+      const query = document.getElementById("queue-search").value.toLowerCase().trim();
+      document.querySelectorAll(".team-card").forEach(card => {
+        const text = card.getAttribute("data-search") || "";
+        card.style.display = text.includes(query) ? "flex" : "none";
+      });
+    }
+
+    // Desk Modal Details
+    function showDeskModal(deskId, section, isOccupied, isBackup, teamName, leadName, leadPhone, members, checkinTime) {
+      const modal = document.getElementById("desk-modal");
+      const icon = document.getElementById("modal-desk-icon");
+      const title = document.getElementById("modal-desk-id");
+      const sub = document.getElementById("modal-desk-section");
+      const body = document.getElementById("modal-desk-body");
+
+      title.textContent = deskId;
+      sub.textContent = `${section} ${isBackup === '1' ? '• Dedicated Reserve / Control Desk' : '• Standard Hall Allocation'}`;
+
+      if (isOccupied === '1') {
+        icon.className = isBackup === '1' 
+          ? "w-11 h-11 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center" 
+          : "w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center";
+        icon.innerHTML = `<i data-lucide="laptop" class="w-5 h-5"></i>`;
+
+        body.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Status:</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">SEATED & ACTIVE</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Assigned Team:</span>
+            <span class="text-slate-900 font-bold">${teamName}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Team Lead:</span>
+            <span class="text-slate-700">${leadName} (${leadPhone})</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Present Members:</span>
+            <span class="text-slate-900 font-mono font-bold">${members} Present</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Check-In Time:</span>
+            <span class="text-slate-700 font-mono">${checkinTime || 'N/A'}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Venue Facilities:</span>
+            <span class="text-emerald-700 font-mono">1Gbps LAN Drop ✓ | 4x Power Sockets ✓</span>
+          </div>
+        `;
+      } else {
+        icon.className = isBackup === '1'
+          ? "w-11 h-11 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center"
+          : "w-11 h-11 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center";
+        icon.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i>`;
+
+        body.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Status:</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">VACANT & READY</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Desk Type:</span>
+            <span class="text-slate-700">${isBackup === '1' ? 'Reserve Control Desk' : 'Standard Hall Desk'}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-500 font-medium">Venue Drop:</span>
+            <span class="text-slate-600 font-mono">LAN Cat6 Tested | 230V Active</span>
+          </div>
+          <p class="text-slate-500 text-[11px] pt-1">This desk is free and can be allocated to arriving RSVP teams or standby waitlists.</p>
+        `;
+      }
+
+      modal.classList.remove("hidden");
+      lucide.createIcons();
+    }
+
+    function closeDeskModal() {
+      document.getElementById("desk-modal").classList.add("hidden");
+    }
+
+    function openWalkinModal() {
+      document.getElementById("walkin-modal").classList.remove("hidden");
+    }
+
+    function closeWalkinModal() {
+      document.getElementById("walkin-modal").classList.add("hidden");
+    }
+  </script>
+</body>
+</html>
